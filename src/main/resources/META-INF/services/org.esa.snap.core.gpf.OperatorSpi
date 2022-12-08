@@ -1,0 +1,8 @@
+org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.SdrOlciSlstrOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.AotMasterOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.AotOlciSlstrOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.AotLowresOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.AotHighresOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.CreateElevationBandOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.aot.GapFillingOp$Spi
