@@ -47,7 +47,7 @@ public final class FracIndex {
      * Sets the fractional component to 0.0 if it is less than
      * zero, and to 1.0 if it is greater than unity.
      */
-    public final void truncate() {
+    public void truncate() {
         if (f < 0.0) {
             f = 0.0;
         } else if (f > 1.0) {

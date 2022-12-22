@@ -32,7 +32,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snap.version>9.0.0-SNAPSHOT</snap.version>
+        <snap.version>9.0.0</snap.version>
         <javahelp.version>2.0.05</javahelp.version>
     </properties>
 
@@ -99,12 +99,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.esa.snap</groupId>
-            <artifactId>idepix-c3solcislstr</artifactId>
-            <version>9.0.0-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.esa.s3tbx</groupId>
             <artifactId>s3tbx-olci-radiometry</artifactId>
             <version>${snap.version}</version>
@@ -139,12 +133,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>18.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.esa.snap</groupId>
-            <artifactId>idepix-olcislstr</artifactId>
-            <version>9.0.0-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>

@@ -128,21 +128,21 @@ public class GapFillingOp extends Operator {
     }
 
     private int fillPixel(int x, int y, Tile aotTile, Tile aotErrTile, double climAot, double noDataValue, float[] fillResult) {
-        double n0 = invDistanceWeight(CLIM_DIST, 0, 4);
+        double n0 = invDistanceWeight(CLIM_DIST, 0);
         double n = n0;
         double sum = climAot * n;
         double sumErr = CLIM_ERR * n;
         float val;
         double weight;
-        int ys = (y - OFF < 0) ? 0 : y - OFF;
-        int xs = (x - OFF < 0) ? 0 : x - OFF;
+        int ys = Math.max(y - OFF, 0);
+        int xs = Math.max(x - OFF, 0);
         int ye = (y + OFF >= rasterHeight) ? rasterHeight - 1 : y + OFF;
         int xe = (x + OFF >= rasterWidth) ? rasterWidth - 1 : x + OFF;
         for (int j = ys; j <= ye; j++) {
             for (int i = xs; i <= xe; i++) {
                 val = aotTile.getSampleFloat(i, j);
                 if (Double.compare(noDataValue, val) != 0) {
-                    weight = invDistanceWeight(i - x, j - y, 4);
+                    weight = invDistanceWeight(i - x, j - y);
                     sum += val * weight;
                     n += weight;
                     sumErr += aotErrTile.getSampleFloat(i, j) * weight;
@@ -167,8 +167,8 @@ public class GapFillingOp extends Operator {
         return flag;
     }
 
-    private static double invDistanceWeight(int i, int j, int power) {
-        return 1 / (Math.pow(Math.pow(i, 2) + Math.pow(j, 2), power / 2) + 1.0E-5);
+    private static double invDistanceWeight(int i, int j) {
+        return 1 / (Math.pow(Math.pow(i, 2) + Math.pow(j, 2), 2) + 1.0E-5);
     }
 
     private static double calcClimAot(float lat) {

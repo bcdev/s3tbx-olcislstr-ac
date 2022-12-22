@@ -10,22 +10,23 @@ import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
-import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.io.File;
 import java.util.logging.Logger;
 
+import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
+
 /**
- * GPF operator for OLCI and MERIS AC.
+ * GPF operator for atmospheric correction on specific OLCI/SLSTR SYN Idepix product.
  *
- * @author Olaf Danne, Marco Peters
+ * @author Grit Kirches, Olaf Danne, Marco Peters
  */
 @OperatorMetadata(alias = "OlciSlstrAc", version = "0.81",
-        authors = "O.Danne, M.Peters",
+        authors = "G. Kirches, O.Danne, M.Peters",
         category = "Optical/Preprocessing",
-        copyright = "Copyright (C) 2018 by Brockmann Consult",
-        description = "Performs atmospheric correction on OLCI or MERIS L1b product.\n" +
+        copyright = "Copyright (C) 2018-2022 by Brockmann Consult",
+        description = "Performs atmospheric correction on specific OLCI/SLSTR SYN Idepix product.\n" +
                 " Uses approach from USwansea/FUB developed in GlobAlbedo and LandCover CCI.")
 public class OlciSlstrAcOp extends Operator {
 
@@ -55,34 +56,13 @@ public class OlciSlstrAcOp extends Operator {
     @Parameter(defaultValue = "true", label = "Compute AOT everywhere (ignore clouds, water)")
     private boolean computeAotEverywhere;
 
-    @Parameter(label = "Path to an OLCI LUT from which atmospheric parameters can be derived. Required for S3AOLCI SDR.",
-    defaultValue = "D:/grit/Workspaces/IdeaProjects/snap/s3tbx/s3tbx-c3solcislstr-ac/luts_backup/ac/ac/lut/SENTINEL3_1_OLCI_lut_glob_c3s_v2.nc")
-    private File pathToLutOlciS3a;
-
-    @Parameter(label = "Path to an OLCI LUT from which atmospheric parameters can be derived. Required for S3B OLCI SDR.",
-            defaultValue = "D:/grit/Workspaces/IdeaProjects/snap/s3tbx/s3tbx-c3solcislstr-ac/luts_backup/ac/ac/lut/SENTINEL3_2_OLCI_lut_glob_c3s_v2.nc")
-    private File pathToLutOlciS3b;
-
-    @Parameter(label = "Path to an OLCI LUT from which atmospheric parameters can be derived. Required for S3A SLSTR SDR.",
-            defaultValue = "D:/grit/Workspaces/IdeaProjects/snap/s3tbx/s3tbx-c3solcislstr-ac/luts_backup/ac/ac/lut/SENTINEL3_1_SLSTR_lut_glob_c3s_v2.nc")
-    private File pathToLutSlstrS3a;
-
-    @Parameter(label = "Path to an OLCI LUT from which atmospheric parameters can be derived. Required for S3B SLSTR SDR.",
-            defaultValue = "D:/grit/Workspaces/IdeaProjects/snap/s3tbx/s3tbx-c3solcislstr-ac/luts_backup/ac/ac/lut/SENTINEL3_2_SLSTR_lut_glob_c3s_v2.nc")
-    private File pathToLutSlstrS3b;
-
+    @Parameter(description = "Path to atmospheric parameter LUTs.")
+    private String pathToAtmosphericParameterLuts;
 
 
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
             label = "C3S SYN OLCI SLSTR L1b product")
     private Product sourceProduct;
-
-//    @SourceProduct(description = "Atmospheric auxiliary product", optional = true,
-//            label = "Atmospheric auxiliary product")
-//    private Product atmAuxProduct;
-
-    @TargetProduct
-    private Product targetProduct;
 
     private Sensor sensor;
 
@@ -114,26 +94,22 @@ public class OlciSlstrAcOp extends Operator {
 
         if (copyGeometryBands) {
             for (String geomBandNameOlci : sensor.getGeomBandNamesOlci()) {
-                RasterDataNode rasterDataNodeOlci = sourceProduct.getBand(geomBandNameOlci);
-                if (rasterDataNodeOlci != null) {
-                    ProductUtils.copyBand(geomBandNameOlci, sourceProduct, getTargetProduct(), true);
-                } else {
-                    rasterDataNodeOlci = sourceProduct.getTiePointGrid(geomBandNameOlci);
-                    if (rasterDataNodeOlci != null) {
-                        ProductUtils.copyTiePointGrid(geomBandNameOlci, sourceProduct, getTargetProduct());
-                    }
-                }
+                copySourceBands(geomBandNameOlci);
             }
             for (String geomBandNameSlstr : sensor.getGeomBandNamesSlstrNadir()) {
-                RasterDataNode rasterDataNodeSlstr = sourceProduct.getBand(geomBandNameSlstr);
-                if (rasterDataNodeSlstr != null) {
-                    ProductUtils.copyBand(geomBandNameSlstr, sourceProduct, getTargetProduct(), true);
-                } else {
-                    rasterDataNodeSlstr = sourceProduct.getTiePointGrid(geomBandNameSlstr);
-                    if (rasterDataNodeSlstr != null) {
-                        ProductUtils.copyTiePointGrid(geomBandNameSlstr, sourceProduct, getTargetProduct());
-                    }
-                }
+                copySourceBands(geomBandNameSlstr);
+            }
+        }
+    }
+
+    private void copySourceBands(String geomBandNameOlci) {
+        RasterDataNode rasterDataNodeOlci = sourceProduct.getBand(geomBandNameOlci);
+        if (rasterDataNodeOlci != null) {
+            ProductUtils.copyBand(geomBandNameOlci, sourceProduct, getTargetProduct(), true);
+        } else {
+            rasterDataNodeOlci = sourceProduct.getTiePointGrid(geomBandNameOlci);
+            if (rasterDataNodeOlci != null) {
+                ProductUtils.copyTiePointGrid(geomBandNameOlci, sourceProduct, getTargetProduct());
             }
         }
     }
@@ -184,12 +160,20 @@ public class OlciSlstrAcOp extends Operator {
         sdrOp.setParameter("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
         switch (sensor) {
             case OLCI_SLSTR_S3A:
-                sdrOp.setParameter("pathToLutOlci", pathToLutOlciS3a);
-                sdrOp.setParameter("pathToLutSlstr", pathToLutSlstrS3a);
+                final String olciALutName =
+                        pathToAtmosphericParameterLuts + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME;
+                sdrOp.setParameter("pathToLutOlci", olciALutName);
+                final String olciBLutName =
+                        pathToAtmosphericParameterLuts + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
+                sdrOp.setParameter("pathToLutSlstr", olciBLutName);
                 break;
             case OLCI_SLSTR_S3B:
-                sdrOp.setParameter("pathToLutOlci", pathToLutOlciS3b);
-                sdrOp.setParameter("pathToLutSlstr", pathToLutSlstrS3b);
+                final String slstrALutName =
+                        pathToAtmosphericParameterLuts + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME;
+                sdrOp.setParameter("pathToLutOlci", slstrALutName);
+                final String slstrBLutName =
+                        pathToAtmosphericParameterLuts + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME;
+                sdrOp.setParameter("pathToLutSlstr", slstrBLutName);
                 break;
             default:
                 throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");

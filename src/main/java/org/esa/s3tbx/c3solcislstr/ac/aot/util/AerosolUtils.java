@@ -9,7 +9,6 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.aot.AotConsts;
 import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.OperatorException;
-import org.esa.snap.core.gpf.common.BandMathsOp;
 import org.esa.snap.core.util.Guardian;
 
 import java.awt.*;
@@ -83,19 +82,6 @@ public class AerosolUtils {
             }
         }
         return new Rectangle(0, start, srcWidth, end - start + 1);
-    }
-
-    public static Band createBooleanExpressionBand(String expression, Product sourceProduct) {
-        BandMathsOp.BandDescriptor bandDescriptor = new BandMathsOp.BandDescriptor();
-        bandDescriptor.name = "band1";
-        bandDescriptor.expression = expression;
-        bandDescriptor.type = ProductData.TYPESTRING_INT8;
-
-        BandMathsOp bandMathsOp = new BandMathsOp();
-        bandMathsOp.setParameterDefaultValues();
-        bandMathsOp.setSourceProduct(sourceProduct);
-        bandMathsOp.setTargetBandDescriptors(bandDescriptor);
-        return bandMathsOp.getTargetProduct().getBandAt(0);
     }
 
 }

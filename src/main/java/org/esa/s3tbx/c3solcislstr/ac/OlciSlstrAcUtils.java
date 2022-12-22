@@ -1,7 +1,6 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
 
-import Jama.Matrix;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -53,16 +52,6 @@ public class OlciSlstrAcUtils {
         }
     }
 
-
-    public static Matrix matrixSquare(double[] doubles) {
-        Matrix matrix = new Matrix(doubles.length, doubles.length);
-        for (int i = 0; i < doubles.length; i++) {
-            for (int j = 0; j < doubles.length; j++) {
-                matrix.set(i, j, doubles[i] * doubles[j]);
-            }
-        }
-        return matrix;
-    }
 
     public static Band createBooleanExpressionBand(String expression, Product sourceProduct) {
         BandMathsOp.BandDescriptor bandDescriptor = new BandMathsOp.BandDescriptor();

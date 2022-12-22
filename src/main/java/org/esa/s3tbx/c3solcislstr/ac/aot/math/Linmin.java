@@ -30,7 +30,7 @@ class Linmin implements Function {
      * @param xi Description of Parameter
      * @param f  Description of Parameter
      */
-    Linmin(double[] p, double xi[], MvFunction f) {
+    Linmin(double[] p, double[] xi, MvFunction f) {
         linmin(p, xi, f);
     }
 
@@ -43,7 +43,7 @@ class Linmin implements Function {
      * @param f  the function
      * @throws IllegalArgumentException Description of Exception
      */
-    void linmin(double[] p, double xi[], MvFunction f) throws IllegalArgumentException {
+    void linmin(double[] p, double[] xi, MvFunction f) throws IllegalArgumentException {
         int n = 0;
         if (p.length != xi.length) {
             throw new IllegalArgumentException("dimentions must agree");

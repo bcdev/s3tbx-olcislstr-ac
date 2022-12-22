@@ -8,8 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac;
  */
 public class OlciSlstrAcConstants {
 
-    public static int MODELTYPE_CONSTANT_VALUE = 0;
-    public static double CO2_MIX_CONSTANT_VALUE = 380.0;
     public static float CWV_CONSTANT_VALUE = 1.5f; // used for MERIS
     public final static String AOT_BAND_NAME = "aot";
     public final static String AOT_ERR_BAND_NAME = "aot_err";
@@ -30,6 +28,11 @@ public class OlciSlstrAcConstants {
     public final static String OLCI_SLSTR_ALTITUDE_NAME = "altitude";
 
     public final static String OLCI_SLSTR_ALTITUDE_NADIR_NAME = "elevation_an";
+
+    public final static String S3_A_OLCI_ATM_PARAMS_LUT_NAME = "SENTINEL3_1_OLCI_lut_glob_c3s_v2.nc";
+    public final static String S3_B_OLCI_ATM_PARAMS_LUT_NAME = "SENTINEL3_2_OLCI_lut_glob_c3s_v2.nc";
+    public final static String S3_A_SLSTR_ATM_PARAMS_LUT_NAME = "SENTINEL3_1_SLSTR_lut_glob_c3s_v2.nc";
+    public final static String S3_B_SLSTR_ATM_PARAMS_LUT_NAME = "SENTINEL3_2_SLSTR_lut_glob_c3s_v2.nc";
 
     final static float[] OLCI_SLSTR_WAVELENGHTS_NOMINAL = {
             400.00f, 412.50f, 442.50f, 490.00f, 510.00f,
@@ -69,17 +72,6 @@ public class OlciSlstrAcConstants {
             1.0f, 1.0f, 1.0f};
 
     // TODO SLSTR bd1 & bd2 estimated
-    final static double K_OZONE_OLCI_SLSTR[] = {
-            0.000, 0.000, 0.002, 0.021, 0.040,
-            0.103, 0.104, 0.052, 0.043, 0.035,
-            0.019, 0.008, 0.006, 0.006, 0.005,
-            0.001, 0.000, 0.000, 0.000, 0.000,
-            0.000,
-            0.103, 0.052, 0.000,
-            0.000, 0.000, 0.000};
-
-    public final static int[] SPECTRAL_INDICES_OLCI_ONLY = {0, 8, 13, 14, 19, 20};
-    public final static int[] SPECTRAL_INDICES_SLSTR_ONLY = {21, 22, 23, 24, 25, 26};
 
     public final static String[] NOT_MERIS_HERITAGE = new String[]{"Oa01_reflectance", "Oa09_reflectance",
             "Oa14_reflectance", "Oa15_reflectance", "Oa20_reflectance", "Oa21_reflectance",
@@ -105,15 +97,6 @@ public class OlciSlstrAcConstants {
             "Oa21_reflectance",
             "S1_reflectance_an", "S2_reflectance_an", "S3_reflectance_an",
             "S5_reflectance_an", "S6_reflectance_an"};
-
-//    final static String[] OLCI_SLSTR_SDR_BAND_NAMES = new String[]{
-//            "sdr_1", "sdr_2", "sdr_3", "sdr_4", "sdr_5",
-//            "sdr_6", "sdr_7", "sdr_8", "sdr_9", "sdr_10",
-//            "sdr_11", "sdr_12",
-//            "sdr_13", "sdr_14", "sdr_15",
-//            "sdr_16",
-//            "sdr_17", "sdr_18", "sdr_19",
-//            "sdr_20", "sdr_21"};
 
     final static String[] OLCI_SLSTR_SDR_BAND_NAMES = new String[]{
             "sdr_Oa01", "sdr_Oa02", "sdr_Oa03", "sdr_Oa04", "sdr_Oa05",
@@ -150,12 +133,6 @@ public class OlciSlstrAcConstants {
             "S1_reflectance_an", "S2_reflectance_an", "S3_reflectance_an",
             "S4_reflectance_an", "S5_reflectance_an", "S6_reflectance_an"};
 
-//    final static String[] OLCI_SLSTR_SDR_ERROR_BAND_NAMES = new String[]{
-//            "sdr_error_1", "sdr_error_2", "sdr_error_3", "sdr_error_4", "sdr_error_5",
-//            "sdr_error_6", "sdr_error_7", "sdr_error_8", "sdr_error_9", "sdr_error_10",
-//            "sdr_error_11", "sdr_error_12", "sdr_error_13", "sdr_error_14", "sdr_error_15",
-//            "sdr_error_16", "sdr_error_17", "sdr_error_18", "sdr_error_19", "sdr_error_20",
-//            "sdr_error_21"};
     final static String[] OLCI_SLSTR_SDR_ERROR_BAND_NAMES = new String[]{
             "sdr_error_Oa01", "sdr_error_Oa02", "sdr_error_Oa03", "sdr_error_Oa04", "sdr_error_Oa05",
             "sdr_error_Oa06", "sdr_error_Oa07", "sdr_error_Oa08", "sdr_error_Oa09", "sdr_error_Oa10",
@@ -180,9 +157,6 @@ public class OlciSlstrAcConstants {
             "(!pixel_classif_flags.IDEPIX_CLOUD AND " +
             "!pixel_classif_flags.IDEPIX_CLOUD_BUFFER AND" +
             "!pixel_classif_flags.IDEPIX_CLOUD_SHADOW) OR pixel_classif_flags.IDEPIX_SNOW_ICE";
-
-    private static final String COMMON_LAND_EXPR_IGNORE_CLOUDS = "pixel_classif_flags.IDEPIX_LAND || " +
-            "pixel_classif_flags.IDEPIX_SNOW_ICE";
 
     final static String[] OLCI_SLSTR_ANCILLARY_BAND_NAMES = new String[]{
             OLCI_SLSTR_VZA_TP_NAME, OLCI_SLSTR_VAA_TP_NAME, OLCI_SLSTR_SZA_TP_NAME, OLCI_SLSTR_SAA_TP_NAME,
@@ -222,9 +196,6 @@ public class OlciSlstrAcConstants {
 
     static final String INPUT_INCONSISTENCY_ERROR_MESSAGE =
             "No valid OLCI/SLSTR product";
-
-    public static final String LAND_EXPR_OLCI_SLSTR_IGNORE_CLOUDS =
-            "NOT quality_flags.invalid AND NOT quality_flags.cosmetic AND (" + COMMON_LAND_EXPR_IGNORE_CLOUDS + ")";
 
     public static final String OLCI_SLSTR_ALL_VALID =
             "NOT quality_flags.invalid AND NOT quality_flags.cosmetic";

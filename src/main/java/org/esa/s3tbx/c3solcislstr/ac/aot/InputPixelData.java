@@ -35,10 +35,6 @@ public class InputPixelData {
         this.diffuseFrac = new double[nSpecWvl];
     }
 
-    public synchronized double[] getDiffuseFrac() {
-        return diffuseFrac;
-    }
-
     public synchronized double[] getSurfReflec() {
         return surfReflec;
     }

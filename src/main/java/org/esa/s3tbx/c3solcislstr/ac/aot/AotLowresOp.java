@@ -104,7 +104,7 @@ public class AotLowresOp extends Operator {
     @Parameter(defaultValue = "0.2")
     private float ndviThreshold;
 
-    private boolean addFitBands = false;
+    private final boolean addFitBands = false;
     private Map<String, Double> sourceNoDataValues;
 
     @Override
@@ -115,7 +115,7 @@ public class AotLowresOp extends Operator {
         instrument = sensor.getName();
 
         geomBandNamesOlci = sensor.getGeomBandNamesOlci();
-        specBandNames = sensor.getToaBandNamesMerisHerritage();
+        specBandNames = sensor.getToaBandNamesMerisHeritage();
         ozoneName = sensor.getOzoneBandNames();
         surfPresName = sensor.getSurfPressBandName();
         wvColName =sensor.getWvBandName();
@@ -231,9 +231,7 @@ public class AotLowresOp extends Operator {
         int skip = 0;
         geomOlci= new PixelGeometry(tileValues[0], tileValues[1], tileValues[2], tileValues[3]);
         skip += 4;
-        for (int i = 0; i < nSpecWvl; i++) {
-            toaRefl[i] = tileValues[skip + i];
-        }
+        System.arraycopy(tileValues, skip, toaRefl, 0, nSpecWvl);
         skip += nSpecWvl;
         double surfP = Math.min(tileValues[skip], 1013.25);
         double o3DU;
@@ -427,10 +425,10 @@ public class AotLowresOp extends Operator {
                 line = line.trim();
                 if (!(line.isEmpty() || line.startsWith("#") || line.startsWith("*"))) {
                     String[] stmp = line.split("[ \t]+");
-                    fullWvl[nWvl] = Float.valueOf(stmp[0]);
+                    fullWvl[nWvl] = Float.parseFloat(stmp[0]);
                     if (fullWvl[nWvl] < 100) fullWvl[nWvl] *= 1000; // conversion from um to nm
-                    fullSoil[nWvl] = Float.valueOf(stmp[this.soilSpecId]);
-                    fullVeg[nWvl] = Float.valueOf(stmp[this.vegSpecId]);
+                    fullSoil[nWvl] = Float.parseFloat(stmp[this.soilSpecId]);
+                    fullVeg[nWvl] = Float.parseFloat(stmp[this.vegSpecId]);
                     nWvl++;
                 }
             }

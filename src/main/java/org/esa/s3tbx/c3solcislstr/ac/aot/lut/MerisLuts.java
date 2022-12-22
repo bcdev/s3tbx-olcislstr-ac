@@ -19,7 +19,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.lut;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteOrder;
 
@@ -28,23 +27,13 @@ import java.nio.ByteOrder;
  */
 public class MerisLuts {
     private static final String merisAotLutFileName = "MERIS/MERIS_LUT_MOMO_ContinentalI_80_SDR_noG_v2.bin";
-    private static final String merisAotKxLutFileName = "MERIS/MERIS_LUT_MOMO_ContinentalI_80_SDR_noG_Kx-AOD_v2.bin";
     private static final String merisCwvLutFileName = "MERIS/MERIS_LUT_6S_Tg_CWV_OZO.bin";
-    private static final String merisCwvKxLutFileName = "MERIS/MERIS_LUT_6S_Kx-CWV_OZO.bin";
     public static ImageInputStream getAotLutData() {
         return openStream(merisAotLutFileName);
     }
 
-    public static ImageInputStream getAotKxLutData() {
-        return openStream(merisAotKxLutFileName);
-    }
-
     public static ImageInputStream getCwvLutData() {
         return openStream(merisCwvLutFileName);
-    }
-
-    public static ImageInputStream getCwvKxLutData() {
-        return openStream(merisCwvKxLutFileName);
     }
 
     private static ImageInputStream openStream(String path) {
@@ -63,13 +52,4 @@ public class MerisLuts {
         return inputStream;
     }
 
-    public static float[] readDimension(ImageInputStream iis) throws IOException {
-        return readDimension(iis, iis.readInt());
-    }
-
-    public static float[] readDimension(ImageInputStream iis, int len) throws IOException {
-        float[] dim = new float[len];
-        iis.readFully(dim, 0, len);
-        return dim;
-    }
 }

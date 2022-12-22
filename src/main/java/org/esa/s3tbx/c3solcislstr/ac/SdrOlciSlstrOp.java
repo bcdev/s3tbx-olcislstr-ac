@@ -3,7 +3,6 @@ package org.esa.s3tbx.c3solcislstr.ac;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.SdrAuxdata;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -18,17 +17,15 @@ import org.esa.snap.core.util.ProductUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 import static java.lang.Math.*;
 import static java.lang.StrictMath.toRadians;
 
 @OperatorMetadata(alias = "Sdr.OlciSlstr", version = "0.8",
-        authors = "O.Danne, M.Peters",
+        authors = "G. Kirches, O.Danne, M.Peters",
         internal = true,
         copyright = "Copyright (C) 2022 by Brockmann Consult",
         description = "C3SLot5 Operator for OLCI SLSTR SDR retrieval")
-
 public class SdrOlciSlstrOp extends PixelOperator {
 
     @SourceProduct
@@ -78,26 +75,16 @@ public class SdrOlciSlstrOp extends PixelOperator {
 
     static final int SRC_DEM_OLCI = 10;
 
-    static final int SRC_DEM_SLSTR = 11;
+//    static final int SRC_DEM_SLSTR = 11;
     static final int SRC_AOT = 12;
     static final int SRC_AOT_ERR = 13;
     static final int SRC_OZONE = 14;
 
-    static final int SRC_SURFACE_PRESSURE = 15;
+//    static final int SRC_SURFACE_PRESSURE = 15;
 
     static final int SRC_Water_VAPOUR = 16;
     static final int SRC_TOA_RFL = 17;
     int SRC_TOA_VAR;
-
-    SdrAuxdata aux;
-
-    private static final String HY_LUT_LOCATION_OLCI_S3A = "/luts_backup/lut/SENTINEL3_1_OLCI_lut_glob_c3s_v2.nc";
-
-    private static final String HY_LUT_LOCATION_OLCI_S3B = "/luts_backup/lut/SENTINEL3_2_OLCI_lut_glob_c3s_v2.nc";
-
-    private static final String HY_LUT_LOCATION_SLSTR_S3A = "/luts_backup/lut/SENTINEL3_1_SLSTR_lut_glob_c3s_v2.nc";
-
-    private static final String HY_LUT_LOCATION_SLSTR_S3B = "/luts_backup/lut/SENTINEL3_2_SLSTR_lut_glob_c3s_v2.nc";
 
     private Lut hyLutOlci;
     private double[] hyLutOlciMinMax;
@@ -109,8 +96,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
     @Override
     protected void prepareInputs() throws OperatorException {
         super.prepareInputs();
-        String lutPathOlci = getLutOlciPath();
-        String lutPathSlstr = getLutSlstrPath();
+        String lutPathOlci = pathToLutOlci.getAbsolutePath();
+        String lutPathSlstr = pathToLutSlstr.getAbsolutePath();
         hyLutOlciMinMax = new double[14];
         hyLutSlstrMinMax = new double[14];
         try {
@@ -124,50 +111,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
             throw new RuntimeException(e);
         }
 //        aux = SdrAuxdata.getInstance(sensor);
-    }
-
-    private String getLutOlciPath() {
-        if (pathToLutOlci == null) {
-            URL lutUrl;
-            switch (sensor) {
-                case OLCI_SLSTR_S3A:
-                    lutUrl = getClass().getResource(HY_LUT_LOCATION_OLCI_S3A);
-                    break;
-                case OLCI_SLSTR_S3B:
-                    lutUrl = getClass().getResource(HY_LUT_LOCATION_OLCI_S3B);
-                    break;
-                default:
-                    throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
-            }
-            if (lutUrl == null) {
-                throw new OperatorException("Could not access default OLCI AC LUT file");
-            }
-            return lutUrl.toExternalForm();
-        } else {
-            return pathToLutOlci.getAbsolutePath();
-        }
-    }
-
-    private String getLutSlstrPath() {
-        if (pathToLutSlstr == null) {
-            URL lutUrl;
-            switch (sensor) {
-                case OLCI_SLSTR_S3A:
-                    lutUrl = getClass().getResource(HY_LUT_LOCATION_SLSTR_S3A);
-                    break;
-                case OLCI_SLSTR_S3B:
-                    lutUrl = getClass().getResource(HY_LUT_LOCATION_SLSTR_S3B);
-                    break;
-                default:
-                    throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
-            }
-            if (lutUrl == null) {
-                throw new OperatorException("Could not access default SLSTR AC LUT file");
-            }
-            return lutUrl.toExternalForm();
-        } else {
-            return pathToLutSlstr.getAbsolutePath();
-        }
     }
 
     @Override
@@ -220,13 +163,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
             }
         }
 
-//        final static String[] OLCI_SLSTR_ANCILLARY_BAND_NAMES = new String[]{
-//                OLCI_SLSTR_VZA_TP_NAME, OLCI_SLSTR_VAA_TP_NAME, OLCI_SLSTR_SZA_TP_NAME, OLCI_SLSTR_SAA_TP_NAME,
-//                OLCI_SLSTR_SZA_TP_NADIR_NAME, OLCI_SLSTR_SAA_TP_NADIR_NAME, OLCI_SLSTR_VZA_TP_NADIR_NAME, OLCI_SLSTR_VAA_TP_NADIR_NAME,
-//                OLCI_SLSTR_ALTITUDE_NADIR_NAME, OLCI_SLSTR_ALTITUDE_NAME,
-//                AOT_AUX_BAND_NAME, AOT_AUX_ERR_BAND_NAME,
-//                OLCI_SLSTR_OZO_TP_NAME, OLCI_SLSTR_SURF_PRESS_TP_NAME, OLCI_SLSTR_WATERVAPOR_TP_NAME};
-
         int ancillaryIndex = SRC_VZA_OLCI;
         for (int i = 0; i < sensor.getAncillaryBandNames().length; i++) {
             if (sensor.getAncillaryBandNames()[i].contains("aot")) {
@@ -241,19 +177,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
         }
 
         SRC_TOA_VAR = SRC_TOA_RFL + sensor.getToaBandNames().length;
-
-//        ImageVarianceOp imageVarianceOp = new ImageVarianceOp();
-//        imageVarianceOp.setParameterDefaultValues();
-//        // sourceProduct contains a copy of the required bands, use original to avoid one copy
-//        if (reflectanceProduct != null) {
-//            imageVarianceOp.setSourceProduct(reflectanceProduct);
-//        } else {
-//            imageVarianceOp.setSourceProduct(sourceProduct);
-//        }
-//        Product varianceProduct = imageVarianceOp.getTargetProduct();
-//        for (int i = 0; i < sensor.getToaBandNames().length; i++) {
-//            configurator.defineSample(SRC_TOA_VAR + i, sensor.getToaBandNames()[i], varianceProduct);
-//        }
 
         final String snowMaskExpression = "pixel_classif_flags.IDEPIX_SNOW_ICE";
 
@@ -338,49 +261,47 @@ public class SdrOlciSlstrOp extends PixelOperator {
         phi_slstr = max(phi_slstr, 1);
 
         //TODO check LUT vza range [60-0] instead of [0, 60]
-        double vzaMinOlci = hyLutOlciMinMax[1];
-        double vzaMaxOlci = hyLutOlciMinMax[0];
+        final double vzaMinOlci = hyLutOlciMinMax[1];
+        final double vzaMaxOlci = hyLutOlciMinMax[0];
 
-        double szaMinOlci = hyLutOlciMinMax[2];
-        double szaMaxOlci = hyLutOlciMinMax[3];
+        final double szaMinOlci = hyLutOlciMinMax[2];
+        final double szaMaxOlci = hyLutOlciMinMax[3];
 
-        double hsfMinOlci = hyLutOlciMinMax[4];
-        double hsfMaxOlci = hyLutOlciMinMax[5];
+        final double hsfMinOlci = hyLutOlciMinMax[4];
+        final double hsfMaxOlci = hyLutOlciMinMax[5];
 
-        double aotMinOlci = hyLutOlciMinMax[6];
-        double aotMaxOlci = hyLutOlciMinMax[7];
+        final double aotMinOlci = hyLutOlciMinMax[6];
+        final double aotMaxOlci = hyLutOlciMinMax[7];
 
-        double ozoMinOlci = hyLutOlciMinMax[8];
-        double ozoMaxOlci = hyLutOlciMinMax[9];
+        final double ozoMinOlci = hyLutOlciMinMax[8];
+        final double ozoMaxOlci = hyLutOlciMinMax[9];
 
-        double cwvMinOlci = hyLutOlciMinMax[10];
-        double cwvMaxOlci = hyLutOlciMinMax[11];
+        final double cwvMinOlci = hyLutOlciMinMax[10];
+        final double cwvMaxOlci = hyLutOlciMinMax[11];
 
-        double amfMinOlci = hyLutOlciMinMax[12];
-        double amfMaxOlci = hyLutOlciMinMax[13];
+        final double amfMinOlci = hyLutOlciMinMax[12];
+        final double amfMaxOlci = hyLutOlciMinMax[13];
 
+        final double vzaMinSlstr = hyLutSlstrMinMax[1];
+        final double vzaMaxSlstr = hyLutSlstrMinMax[0];
 
-        double vzaMinSlstr = hyLutSlstrMinMax[1];
-        double vzaMaxSlstr = hyLutSlstrMinMax[0];
+        final double szaMinSlstr = hyLutSlstrMinMax[2];
+        final double szaMaxSlstr = hyLutSlstrMinMax[3];
 
-        double szaMinSlstr = hyLutSlstrMinMax[2];
-        double szaMaxSlstr = hyLutSlstrMinMax[3];
+        final double hsfMinSlstr = hyLutSlstrMinMax[4];
+        final double hsfMaxSlstr = hyLutSlstrMinMax[5];
 
-        double hsfMinSlstr = hyLutSlstrMinMax[4];
-        double hsfMaxSlstr = hyLutSlstrMinMax[5];
+        final double aotMinSlstr = hyLutSlstrMinMax[6];
+        final double aotMaxSlstr = hyLutSlstrMinMax[7];
 
-        double aotMinSlstr = hyLutSlstrMinMax[6];
-        double aotMaxSlstr = hyLutSlstrMinMax[7];
+        final double ozoMinSlstr = hyLutSlstrMinMax[8];
+        final double ozoMaxSlstr = hyLutSlstrMinMax[9];
 
+        final double cwvMinSlstr = hyLutSlstrMinMax[10];
+        final double cwvMaxSlstr = hyLutSlstrMinMax[11];
 
-        double ozoMinSlstr = hyLutSlstrMinMax[8];
-        double ozoMaxSlstr = hyLutSlstrMinMax[9];
-
-        double cwvMinSlstr = hyLutSlstrMinMax[10];
-        double cwvMaxSlstr = hyLutSlstrMinMax[11];
-
-        double amfMinSlstr = hyLutSlstrMinMax[12];
-        double amfMaxSlstr = hyLutSlstrMinMax[13];
+        final double amfMinSlstr = hyLutSlstrMinMax[12];
+        final double amfMaxSlstr = hyLutSlstrMinMax[13];
 
 
         hsf *= 0.001; // convert m to km
@@ -400,16 +321,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
             return;
         }
 
-        double ozo;
-        double cwv;
-        double gas;
-
-//      CWV & OZO - provided as a constant value and the other as pixel-based, depending on the sensor
-//      MERIS/OLCI: OZO per-pixel, CWV as constant value
-        ozo = 0.001 * sourceSamples[SRC_OZONE].getDouble() * 46698.0;
-        //Repaced OlciSlstrAcConstants.CWV_CONSTANT_VALUE;   constant mean value of 1.5
-        cwv = sourceSamples[SRC_Water_VAPOUR].getDouble();
-        gas = ozo;
+        double ozo = 0.001 * sourceSamples[SRC_OZONE].getDouble() * 46698.0;
+        double cwv = sourceSamples[SRC_Water_VAPOUR].getDouble();
 
         double vza_olci_r = toRadians(vza_olci);
         double sza_olci_r = toRadians(sza_olci);
@@ -465,14 +378,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
             OlciSlstrAcUtils.fillTargetSampleWithNoDataValue(targetSamples);
             return;
         }
-
-
-//        final double sec = 1.0 / Math.cos(Math.toRadians(sza));
-//        for (int i = 0; i < N_WAV; i++) {
-//            matrix[0][i] *= sec * Math.PI;
-//            matrix[1][i] *= sec;
-//            matrix[3][i] = 1.0 - matrix[3][i];  // down
-//            matrix[4][i] = 1.0 - matrix[4][i];  // up
 
         double[] sab = new double[sensor.getNumBands()];
         double[] rfl_pix = new double[sensor.getNumBands()];

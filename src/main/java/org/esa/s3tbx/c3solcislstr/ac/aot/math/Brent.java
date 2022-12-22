@@ -28,8 +28,8 @@ public class Brent {
     public static double[] brent(double ax, double bx, double cx, Function fun, double tol) throws IllegalStateException {
         double e = 0.0;
         double d = 0.0;
-        double a = (ax < cx ? ax : cx);
-        double b = (ax > cx ? ax : cx);
+        double a = (Math.min(ax, cx));
+        double b = (Math.max(ax, cx));
         double x = bx;
         double w = bx;
         double v = bx;

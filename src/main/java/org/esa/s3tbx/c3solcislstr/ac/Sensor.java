@@ -25,16 +25,12 @@ public enum Sensor {
 
     // todo: define all numbers as constants
 
-    OLCI_SLSTR_S3A("OLCI_SLSTR_S3A", 27, 15,0.02, 0.04, 0.05, 0.005,
+    OLCI_SLSTR_S3A("OLCI_SLSTR_S3A", 27, 15, 0.02, 0.005,
             OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_WAVELENGHTS_S3A,
-            1.0,
             OLCI_SLSTR_TOA_BAND_NAMES,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
             OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_TOA_BAND_NAMES_OLCI,
-            OLCI_SLSTR_TOA_BAND_NAMES_SLSTR_NADIR,
             OLCI_SLSTR_ANCILLARY_BAND_NAMES,
             OLCI_SLSTR_SDR_BAND_NAMES,
             OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
@@ -49,19 +45,14 @@ public enum Sensor {
             OLCI_SLSTR_VALID_EXPR,
             OLCI_SLSTR_AOT_OUT_EXPR,
             OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR,
-            INPUT_INCONSISTENCY_ERROR_MESSAGE),
+            LAND_EXPR_OLCI_SLSTR),
 
-    OLCI_SLSTR_S3B("OLCI_SLSTR_S3B", 27, 15,0.02, 0.04, 0.05, 0.005,
+    OLCI_SLSTR_S3B("OLCI_SLSTR_S3B", 27, 15, 0.02, 0.005,
             OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_WAVELENGHTS_S3B,
-            1.0,
             OLCI_SLSTR_TOA_BAND_NAMES,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
             OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_TOA_BAND_NAMES_OLCI,
-            OLCI_SLSTR_TOA_BAND_NAMES_SLSTR_NADIR,
             OLCI_SLSTR_ANCILLARY_BAND_NAMES,
             OLCI_SLSTR_SDR_BAND_NAMES,
             OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
@@ -76,19 +67,14 @@ public enum Sensor {
             OLCI_SLSTR_VALID_EXPR,
             OLCI_SLSTR_AOT_OUT_EXPR,
             OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR,
-            INPUT_INCONSISTENCY_ERROR_MESSAGE),
+            LAND_EXPR_OLCI_SLSTR),
 
-    OLCI_SLSTR_NOMINAL("OLCI_SLSTR_NOMINAL", 27, 15,0.02, 0.04, 0.05, 0.005,
+    OLCI_SLSTR_NOMINAL("OLCI_SLSTR_NOMINAL", 27, 15, 0.02, 0.005,
             OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_WAVELENGHTS_NOMINAL,
-            1.0,
             OLCI_SLSTR_TOA_BAND_NAMES,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
             OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
             OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_TOA_BAND_NAMES_OLCI,
-            OLCI_SLSTR_TOA_BAND_NAMES_SLSTR_NADIR,
             OLCI_SLSTR_ANCILLARY_BAND_NAMES,
             OLCI_SLSTR_SDR_BAND_NAMES,
             OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
@@ -103,25 +89,18 @@ public enum Sensor {
             OLCI_SLSTR_VALID_EXPR,
             OLCI_SLSTR_AOT_OUT_EXPR,
             OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR,
-            INPUT_INCONSISTENCY_ERROR_MESSAGE);
+            LAND_EXPR_OLCI_SLSTR);
 
     private final String name;
     private final int numBands;
     private final int numBandsAotCorr;
     private final double radiometricError;
-    private final double cwvError;
-    private final double ozoError;
     private final double rtmError;
     private final float[] calCoeff;
-    private final float[] wavelength;
-    private final double errCoregScale;
     private final String[] toaBandNames;
     private final String[] toaBandNamesToCorrected;
     private final int[] toaBandNamesToCorrectedBinaer;
     private final String[] toaBandNamesMerisHeritage;
-    private final String[] toaBandNamesOlci;
-    private final String[] toaBandNamesSlstrNadir;
     private final String[] ancillaryBandNames;
     private final String[] sdrBandNames;
     private final String[] sdrErrorBandNames;
@@ -138,35 +117,27 @@ public enum Sensor {
     private final double[] specWeights;
     private final String landExpr;
 
-    private final String inputErrorMessage;
-
 
     Sensor(String name, int numBands, int numBandsAotCorr, double radiometricError,
-           double cwvError, double ozoError, double rtmError, float[] calCoeff, float[] wavelength, double errCoregScale,
+           double rtmError, float[] calCoeff,
            String[] toaBandNames, String[] toaBandNamesToCorrected, int[] toaBandNamesToCorrectedBinaer,
-           String [] toaBandNamesMerisHeritage,String [] toaBandNamesOlci, String[] toaBandNamesSlstrNadir,
+           String [] toaBandNamesMerisHeritage,
            String[] ancillaryBandNames, String[] sdrBandBandNames, String[] sdrErrorBandNames,
            String[] geomBandNamesOlci, String[] geomBandNamesSlstrNadir,
            String ozoneBandNames, String surfPressBandName, String wvBandName, String ndviBandName, String ndviExpr,
            String nirName, String validExpr, String aotOutExpr, double[] specWeights,
-           String landExpr, String inputErrorMessage) {
+           String landExpr) {
 
         this.name = name;
         this.numBands = numBands;
         this.numBandsAotCorr = numBandsAotCorr;
         this.radiometricError = radiometricError;
-        this.cwvError = cwvError;
-        this.ozoError = ozoError;
         this.rtmError = rtmError;
         this.calCoeff = calCoeff;
-        this.wavelength = wavelength;
-        this.errCoregScale = errCoregScale;
         this.toaBandNames = toaBandNames;
         this.toaBandNamesToCorrected = toaBandNamesToCorrected;
         this.toaBandNamesToCorrectedBinaer= toaBandNamesToCorrectedBinaer;
         this.toaBandNamesMerisHeritage = toaBandNamesMerisHeritage;
-        this.toaBandNamesOlci = toaBandNamesOlci;
-        this.toaBandNamesSlstrNadir = toaBandNamesSlstrNadir;
         this.ancillaryBandNames = ancillaryBandNames;
         this.sdrBandNames = sdrBandBandNames;
         this.sdrErrorBandNames = sdrErrorBandNames;
@@ -182,7 +153,6 @@ public enum Sensor {
         this.wvBandName = wvBandName;
         this.specWeights = specWeights;
         this.landExpr = landExpr;
-        this.inputErrorMessage = inputErrorMessage;
     }
 
     public String getName() {
@@ -202,36 +172,12 @@ public enum Sensor {
         return radiometricError;
     }
 
-    public double getCwvError() {
-        return cwvError;
-    }
-
-    public double getOzoError() {
-        return ozoError;
-    }
-
     public double getRtmError() {
         return rtmError;
     }
 
-    public float[] getWavelength() {
-        return wavelength;
-    }
-
     public float[] getCalCoeff() {
         return calCoeff;
-    }
-
-    public double getErrCoregScale() {
-        return errCoregScale;
-    }
-
-    public String[] getToaBandNamesOlci() {
-        return toaBandNamesOlci;
-    }
-
-    public String[] getToaBandNamesSlstrNadir() {
-        return toaBandNamesSlstrNadir;
     }
 
     public String[] getToaBandNames() {
@@ -245,7 +191,7 @@ public enum Sensor {
         return toaBandNamesToCorrectedBinaer;
     }
 
-    public String[] getToaBandNamesMerisHerritage() {return toaBandNamesMerisHeritage; }
+    public String[] getToaBandNamesMerisHeritage() {return toaBandNamesMerisHeritage; }
     public String[] getAncillaryBandNames() {
         return ancillaryBandNames;
     }
@@ -260,10 +206,6 @@ public enum Sensor {
 
     public String getLandExpr() {
         return landExpr;
-    }
-
-    public String getINPUT_INCONSISTENCY_ERROR_MESSAGE() {
-        return INPUT_INCONSISTENCY_ERROR_MESSAGE;
     }
 
     public String[] getGeomBandNamesOlci() {

@@ -17,43 +17,12 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot.lut;
 
 import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.MemoryCacheImageInputStream;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteOrder;
 
 /**
  * Access to the LookUpTables
  */
 public class Luts {
-
-    private static final String aotLutPattern = "%INSTRUMENT%/%INSTRUMENT%_LUT_MOMO_ContinentalI_80_SDR_noG_v2.bin";
-    private static final String cwvLutPattern = "%INSTRUMENT%/%INSTRUMENT%_LUT_6S_Tg_CWV_OZO.bin";
-
-    public static ImageInputStream getAotLutData(String instrument) {
-        return openStream(aotLutPattern.replace("%INSTRUMENT%", instrument));
-    }
-
-
-    public static ImageInputStream getCwvLutData(String instrument) {
-        return openStream(cwvLutPattern.replace("%INSTRUMENT%", instrument));
-    }
-
-    private static ImageInputStream openStream(String path) {
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(openResource(path));
-        ImageInputStream imageInputStream = new MemoryCacheImageInputStream(bufferedInputStream);
-        imageInputStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-        return imageInputStream;
-    }
-
-    private static InputStream openResource(String path) {
-        InputStream inputStream = Luts.class.getResourceAsStream(path);
-        if (inputStream == null) {
-            throw new IllegalArgumentException("Could not find resource: " + path);
-        }
-        return inputStream;
-    }
 
     public static float[] readDimension(ImageInputStream iis) throws IOException {
         return readDimension(iis, iis.readInt());

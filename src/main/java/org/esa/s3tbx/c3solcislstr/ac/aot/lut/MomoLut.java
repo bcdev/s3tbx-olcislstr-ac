@@ -72,7 +72,7 @@ public class MomoLut {
             }
             this.aot = Luts.readDimension(aotIis);
 
-            float[] values = readValues(aotIis, aot.length, hsf.length, azi.length, sza.length, vza.length, nParameter);
+            float[] values = readValues(aotIis, aot.length, hsf.length, azi.length, sza.length, vza.length);
 
             float[][] dimensions = new float[][]{hsf, vza, sza, azi, aot};
             sdrLut = new MatrixLookupTable(nWvl, nParameter, new ColumnMajorMatrixFactory(), values, dimensions);
@@ -97,14 +97,15 @@ public class MomoLut {
         PixelGeometry geom;
             geom =  inPix.geomOlci;
             final double[] toaR =  inPix.toaReflec;
-            final float geomAMF = (float) ((1 / Math.cos(Math.toRadians(geom.sza))
+        final double cosSza = Math.cos(Math.toRadians(geom.sza));
+        final float geomAMF = (float) ((1 / cosSza
                     + 1 / Math.cos(Math.toRadians(geom.vza))));
             final double[] gasT = getGasTransmission(geomAMF, (float) inPix.wvCol, (float) (inPix.o3du / 1000));
             double[][] lutValues = sdrLut.getValues(inPix.surfPressure, geom.vza, geom.sza, geom.razi, tau);
 
             for (int iWvl = 0; iWvl < inPix.nSpecWvl; iWvl++) {
-                double rhoPath = lutValues[iWvl][0] * Math.PI / Math.cos(Math.toRadians(geom.sza));
-                double tupTdown = lutValues[iWvl][1] / Math.cos(Math.toRadians(geom.sza));
+                double rhoPath = lutValues[iWvl][0] * Math.PI / cosSza;
+                double tupTdown = lutValues[iWvl][1] / cosSza;
                 double spherAlb = lutValues[iWvl][2];
                 //double tgO3 = Math.exp(inPix.o3du * o3corr[i] * geomAMF/2); // my o3 correction scheme uses AMF=SC/VC not AMF=SC
                 double toaCorr = toaR[iWvl] / gasT[iWvl];
@@ -140,19 +141,20 @@ public class MomoLut {
      * @return -
      */
     public synchronized double getMaxAOT(InputPixelData ipd) {
-        final float geomAMF = (float) ((1 / Math.cos(Math.toRadians(ipd.geomOlci.sza))
+        final double cosSza = Math.cos(Math.toRadians(ipd.geomOlci.sza));
+        final float geomAMF = (float) ((1 / cosSza
                 + 1 / Math.cos(Math.toRadians(ipd.geomOlci.vza))));
         final double[] gasT = getGasTransmission(geomAMF, (float) ipd.wvCol, (float) (ipd.o3du / 1000));
         final double toa = ipd.toaReflec[0] / gasT[0];
         int iAot = 0;
         double[][] lutValues = sdrLut.getValues(ipd.surfPressure, ipd.geomOlci.vza, ipd.geomOlci.sza, ipd.geomOlci.razi, aot[iAot]);
-        double rhoPath1 = lutValues[0][0] * Math.PI / Math.cos(Math.toRadians(ipd.geomOlci.sza));
+        double rhoPath1 = lutValues[0][0] * Math.PI / cosSza;
         double rhoPath0 = rhoPath1;
         while (iAot < aot.length - 1 && rhoPath1 < toa) {
             rhoPath0 = rhoPath1;
             iAot++;
             lutValues = sdrLut.getValues(ipd.surfPressure, ipd.geomOlci.vza, ipd.geomOlci.sza, ipd.geomOlci.razi, aot[iAot]);
-            rhoPath1 = lutValues[0][0] * Math.PI / Math.cos(Math.toRadians(ipd.geomOlci.sza));
+            rhoPath1 = lutValues[0][0] * Math.PI / cosSza;
         }
         if (iAot == 0) return 0.005;
         if (rhoPath1 < toa) return 2.0;
@@ -183,8 +185,8 @@ public class MomoLut {
         return gasTransLut.getValues(geomAmf, wvCol, o3AtmCm);
     }
 
-    private float[] readValues(ImageInputStream iis, int nAot, int nHsf, int nAzi, int nSza, int nVza, int nParameter) throws IOException {
-        int len = nWvl * nAot * nHsf * nAzi * nSza * nVza * nParameter;
+    private float[] readValues(ImageInputStream iis, int nAot, int nHsf, int nAzi, int nSza, int nVza) throws IOException {
+        int len = nWvl * nAot * nHsf * nAzi * nSza * nVza * 5;
         float[] val = new float[len];
         for (int iWvl = 0; iWvl < nWvl; iWvl++) {
             for (int iAot = 0; iAot < nAot; iAot++) {
@@ -192,9 +194,9 @@ public class MomoLut {
                     for (int iAzi = 0; iAzi < nAzi; iAzi++) {
                         for (int iSza = 0; iSza < nSza; iSza++) {
                             for (int iVza = 0; iVza < nVza; iVza++) {
-                                for (int iPar = 0; iPar < nParameter; iPar++) {
+                                for (int iPar = 0; iPar < 5; iPar++) {
                                     int pos = calcPosition(new int[]{iHsf, iVza, iSza, iAzi, iAot, iPar, iWvl},
-                                                           new int[]{nHsf, nVza, nSza, nAzi, nAot, nParameter, nWvl});
+                                                           new int[]{nHsf, nVza, nSza, nAzi, nAot, 5, nWvl});
                                     val[pos] = iis.readFloat();
                                 }
                             }

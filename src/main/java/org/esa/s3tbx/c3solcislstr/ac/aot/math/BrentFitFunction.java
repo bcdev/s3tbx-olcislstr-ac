@@ -8,7 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.math;
 import org.esa.s3tbx.c3solcislstr.ac.aot.InputPixelData;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.MomoLut;
 import org.esa.snap.core.gpf.OperatorException;
-import org.esa.snap.core.util.Guardian;
 
 /**
  * @author akheckel
@@ -28,16 +27,6 @@ public class BrentFitFunction implements Function {
     private final double[] specWeights;
     private final double[] specSoil;
     private final double[] specVeg;
-
-    public BrentFitFunction(int modelType, InputPixelData[] inPixField, MomoLut lut, double[] specWeights) {
-        Guardian.assertEquals("modelType", modelType, ANGULAR_MODEL);
-        this.model = modelType;
-        this.inPixField = inPixField;
-        this.lut = lut;
-        this.specWeights = specWeights;
-        this.specSoil = null;
-        this.specVeg = null;
-    }
 
     public BrentFitFunction(int modelType, InputPixelData[] inPixField, MomoLut lut, double[] specWeights, double[] specSoil, double[] specVeg) {
         this.model = modelType;
@@ -75,13 +64,10 @@ public class BrentFitFunction implements Function {
 
         if (!(fmin > 0)) {
             double[] p = initStartVector(model);
-            double xi[][] = initParameterBasis(p.length);
+            double[][] xi = initParameterBasis(p.length);
             double ftol = 2e-3;   // limit for optimization
             MvFunction surfModel;
             switch (model) {
-//                case 1:
-//                    surfModel = new EmodAng(inPixData.getDiffuseFrac(), inPixData.getSurfReflec(), specWeights);
-//                    break;
                 case 2:
                     surfModel = new EmodSpec(specSoil, specVeg, inPixData.getSurfReflec(), specWeights);
                     break;
@@ -129,7 +115,7 @@ public class BrentFitFunction implements Function {
     //     defining unit matrix as base of the parameter space
 //     needed for Powell
     private static double[][] initParameterBasis(int length) {
-        double xi[][] = new double[length][length];
+        double[][] xi = new double[length][length];
         for (int i = 0; i < length; i++) xi[i][i] = 1.0;
         return xi;
     }

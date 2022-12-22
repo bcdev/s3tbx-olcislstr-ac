@@ -9,7 +9,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.math;
  * This class provides the spectrum model function to be minimised by Powell.
  * (see ATBD (4), (6))
  *
- *
  */
 public class EmodSpec implements MvFunction {
 
