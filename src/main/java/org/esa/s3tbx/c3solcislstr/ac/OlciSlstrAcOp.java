@@ -163,14 +163,14 @@ public class OlciSlstrAcOp extends Operator {
                 final String olciALutName =
                         pathToAtmosphericParameterLuts + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME;
                 sdrOp.setParameter("pathToLutOlci", olciALutName);
-                final String olciBLutName =
-                        pathToAtmosphericParameterLuts + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutSlstr", olciBLutName);
-                break;
-            case OLCI_SLSTR_S3B:
                 final String slstrALutName =
                         pathToAtmosphericParameterLuts + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutOlci", slstrALutName);
+                sdrOp.setParameter("pathToLutSlstr", slstrALutName);
+                break;
+            case OLCI_SLSTR_S3B:
+                final String olciBLutName =
+                        pathToAtmosphericParameterLuts + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
+                sdrOp.setParameter("pathToLutOlci", olciBLutName);
                 final String slstrBLutName =
                         pathToAtmosphericParameterLuts + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME;
                 sdrOp.setParameter("pathToLutSlstr", slstrBLutName);

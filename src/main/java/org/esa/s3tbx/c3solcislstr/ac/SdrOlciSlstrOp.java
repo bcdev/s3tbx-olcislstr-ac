@@ -66,11 +66,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
     static final int SRC_SAA_OLCI = 5;
 
     static final int SRC_VZA_SLSTR = 6;
-
     static final int SRC_VAA_SLSTR = 7;
-
     static final int SRC_SZA_SLSTR = 8;
-
     static final int SRC_SAA_SLSTR = 9;
 
     static final int SRC_DEM_OLCI = 10;
@@ -91,6 +88,34 @@ public class SdrOlciSlstrOp extends PixelOperator {
 
     private Lut hyLutSlstr;
     private double[] hyLutSlstrMinMax;
+    private double vzaMinOlci;
+    private double vzaMaxOlci;
+    private double szaMinOlci;
+    private double szaMaxOlci;
+    private double hsfMinOlci;
+    private double hsfMaxOlci;
+    private double aotMinOlci;
+    private double aotMaxOlci;
+    private double ozoMinOlci;
+    private double ozoMaxOlci;
+    private double cwvMinOlci;
+    private double cwvMaxOlci;
+    private double amfMinOlci;
+    private double amfMaxOlci;
+    private double vzaMinSlstr;
+    private double vzaMaxSlstr;
+    private double szaMinSlstr;
+    private double szaMaxSlstr;
+    private double hsfMinSlstr;
+    private double hsfMaxSlstr;
+    private double aotMinSlstr;
+    private double aotMaxSlstr;
+    private double ozoMinSlstr;
+    private double ozoMaxSlstr;
+    private double cwvMinSlstr;
+    private double cwvMaxSlstr;
+    private double amfMinSlstr;
+    private double amfMaxSlstr;
 
 
     @Override
@@ -111,6 +136,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
             throw new RuntimeException(e);
         }
 //        aux = SdrAuxdata.getInstance(sensor);
+        //TODO check LUT vza range [60-0] instead of [0, 60]
+        initMinMaxInputValues();
     }
 
     @Override
@@ -260,50 +287,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
         phi_slstr = min(phi_slstr, 179);
         phi_slstr = max(phi_slstr, 1);
 
-        //TODO check LUT vza range [60-0] instead of [0, 60]
-        final double vzaMinOlci = hyLutOlciMinMax[1];
-        final double vzaMaxOlci = hyLutOlciMinMax[0];
-
-        final double szaMinOlci = hyLutOlciMinMax[2];
-        final double szaMaxOlci = hyLutOlciMinMax[3];
-
-        final double hsfMinOlci = hyLutOlciMinMax[4];
-        final double hsfMaxOlci = hyLutOlciMinMax[5];
-
-        final double aotMinOlci = hyLutOlciMinMax[6];
-        final double aotMaxOlci = hyLutOlciMinMax[7];
-
-        final double ozoMinOlci = hyLutOlciMinMax[8];
-        final double ozoMaxOlci = hyLutOlciMinMax[9];
-
-        final double cwvMinOlci = hyLutOlciMinMax[10];
-        final double cwvMaxOlci = hyLutOlciMinMax[11];
-
-        final double amfMinOlci = hyLutOlciMinMax[12];
-        final double amfMaxOlci = hyLutOlciMinMax[13];
-
-        final double vzaMinSlstr = hyLutSlstrMinMax[1];
-        final double vzaMaxSlstr = hyLutSlstrMinMax[0];
-
-        final double szaMinSlstr = hyLutSlstrMinMax[2];
-        final double szaMaxSlstr = hyLutSlstrMinMax[3];
-
-        final double hsfMinSlstr = hyLutSlstrMinMax[4];
-        final double hsfMaxSlstr = hyLutSlstrMinMax[5];
-
-        final double aotMinSlstr = hyLutSlstrMinMax[6];
-        final double aotMaxSlstr = hyLutSlstrMinMax[7];
-
-        final double ozoMinSlstr = hyLutSlstrMinMax[8];
-        final double ozoMaxSlstr = hyLutSlstrMinMax[9];
-
-        final double cwvMinSlstr = hyLutSlstrMinMax[10];
-        final double cwvMaxSlstr = hyLutSlstrMinMax[11];
-
-        final double amfMinSlstr = hyLutSlstrMinMax[12];
-        final double amfMaxSlstr = hyLutSlstrMinMax[13];
-
-
         hsf *= 0.001; // convert m to km
         if (hsf <= 0.0 && hsf >= -0.45) {
             hsf = hsfMinOlci;
@@ -352,17 +335,17 @@ public class SdrOlciSlstrOp extends PixelOperator {
         }
 
         if (ozo <= ozoMinOlci || ozo <= ozoMinSlstr) {
-            ozo = Math.max(ozoMinOlci,ozoMinSlstr);
+            ozo = Math.max(ozoMinOlci, ozoMinSlstr);
         }
         if (ozo >= ozoMaxOlci || ozo >= ozoMaxSlstr) {
-            ozo = Math.min(ozoMaxOlci,ozoMaxSlstr);
+            ozo = Math.min(ozoMaxOlci, ozoMaxSlstr);
         }
 
         if (cwv <= cwvMinOlci || cwv <= cwvMinSlstr) {
-            cwv = Math.max(cwvMinOlci,cwvMinSlstr);
+            cwv = Math.max(cwvMinOlci, cwvMinSlstr);
         }
         if (cwv >= ozoMaxOlci || cwv >= ozoMaxSlstr) {
-            cwv = Math.min(cwvMaxOlci,cwvMaxSlstr);
+            cwv = Math.min(cwvMaxOlci, cwvMaxSlstr);
         }
 
 
@@ -447,6 +430,50 @@ public class SdrOlciSlstrOp extends PixelOperator {
                 }
             }
         }
+    }
+
+    private void initMinMaxInputValues() {
+        vzaMinOlci = hyLutOlciMinMax[1];
+        vzaMaxOlci = hyLutOlciMinMax[0];
+
+        szaMinOlci = hyLutOlciMinMax[2];
+        szaMaxOlci = hyLutOlciMinMax[3];
+
+        hsfMinOlci = hyLutOlciMinMax[4];
+        hsfMaxOlci = hyLutOlciMinMax[5];
+
+        aotMinOlci = hyLutOlciMinMax[6];
+        aotMaxOlci = hyLutOlciMinMax[7];
+
+        ozoMinOlci = hyLutOlciMinMax[8];
+        ozoMaxOlci = hyLutOlciMinMax[9];
+
+        cwvMinOlci = hyLutOlciMinMax[10];
+        cwvMaxOlci = hyLutOlciMinMax[11];
+
+        amfMinOlci = hyLutOlciMinMax[12];
+        amfMaxOlci = hyLutOlciMinMax[13];
+
+        vzaMinSlstr = hyLutSlstrMinMax[1];
+        vzaMaxSlstr = hyLutSlstrMinMax[0];
+
+        szaMinSlstr = hyLutSlstrMinMax[2];
+        szaMaxSlstr = hyLutSlstrMinMax[3];
+
+        hsfMinSlstr = hyLutSlstrMinMax[4];
+        hsfMaxSlstr = hyLutSlstrMinMax[5];
+
+        aotMinSlstr = hyLutSlstrMinMax[6];
+        aotMaxSlstr = hyLutSlstrMinMax[7];
+
+        ozoMinSlstr = hyLutSlstrMinMax[8];
+        ozoMaxSlstr = hyLutSlstrMinMax[9];
+
+        cwvMinSlstr = hyLutSlstrMinMax[10];
+        cwvMaxSlstr = hyLutSlstrMinMax[11];
+
+        amfMinSlstr = hyLutSlstrMinMax[12];
+        amfMaxSlstr = hyLutSlstrMinMax[13];
     }
 
     public static class Spi extends OperatorSpi {
