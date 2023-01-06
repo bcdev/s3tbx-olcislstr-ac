@@ -353,7 +353,7 @@ public class SdrOlciSlstrOp extends PixelOperator {
         double[] tg_olci = hyLutOlci.getTG(cwv, ozo, amf_olci);
         double[] tg_slstr = hyLutSlstr.getTG(cwv, ozo, amf_slstr);
         double[][] f_int_all_olci = hyLutOlci.getRT(aot, sza_olci, vza_olci, phi_olci, hsf);
-        double[][] f_int_all_slstr = hyLutSlstr.getRT(aot, sza_olci, vza_olci, phi_slstr, hsf);
+        double[][] f_int_all_slstr = hyLutSlstr.getRT(aot, sza_slstr, vza_slstr, phi_slstr, hsf);
 
         int[] keyCorrectedYesNo = sensor.gettoaBandNamesToCorrectedBinaer();
 
