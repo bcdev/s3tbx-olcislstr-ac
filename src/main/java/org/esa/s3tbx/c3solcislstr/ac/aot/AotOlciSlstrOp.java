@@ -67,12 +67,14 @@ public class AotOlciSlstrOp extends Operator {
             targetProduct = AotMasterOp.EMPTY_PRODUCT;
             return;
         } else {
-            Map<String, Object> subsetParam = new HashMap<>(3);
-            subsetParam.put("region", szaRegion);
-            Dimension targetTS = ImageManager.getPreferredTileSize(sourceProduct);
-            RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
-            szaSubProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(SubsetOp.class), subsetParam, sourceProduct, rhTarget);
-            ProductUtils.copyMetadata(sourceProduct, szaSubProduct);
+// TODO we cannot subset here because SdrOlciSlstrOp expects two inputs of same extent, the main input and this aot output
+//            Map<String, Object> subsetParam = new HashMap<>(3);
+//            subsetParam.put("region", szaRegion);
+//            Dimension targetTS = ImageManager.getPreferredTileSize(sourceProduct);
+//            RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
+//            szaSubProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(SubsetOp.class), subsetParam, sourceProduct, rhTarget);
+//            ProductUtils.copyMetadata(sourceProduct, szaSubProduct);
+            szaSubProduct = sourceProduct;
         }
 
 
