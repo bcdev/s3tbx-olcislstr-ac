@@ -12,10 +12,10 @@ import org.esa.s3tbx.c3solcislstr.ac.aot.math.Function;
 /**
  * Provides aerosol retrieval class
  * currently not thread safe !!!
- *     subsequent calls to Brent and Powell.
- *     Somewhere along that line thread safety is broken
+ * subsequent calls to Brent and Powell.
+ * Somewhere along that line thread safety is broken
  * --> instantiate locally in computeTileStack()
- * 
+ *
  * @author akheckel
  */
 public class PointRetrieval {
@@ -45,15 +45,14 @@ public class PointRetrieval {
     private double calcErrFromCurv(double optErr, double a) {
         if (a < 0) {
             return Math.sqrt(optErr / 0.8 * 2 / 1e-4) + 0.03;
-        }
-        else {
+        } else {
             return Math.sqrt(optErr / 0.8 * 2 / a) + 0.03;
         }
     }
 
     private double calcCurvature(double optAOT, double optErr, double maxAOT) {
-        double p1 = 0.33*maxAOT;
-        double p2 = 0.66*maxAOT;
+        double p1 = 0.33 * maxAOT;
+        double p2 = 0.66 * maxAOT;
         final double[] x0 = {1, 1, 1};
         final double[] x1 = {p1, optAOT, p2};
         final double[] x2 = {x1[0] * x1[0], x1[1] * x1[1], x1[2] * x1[2]};

@@ -72,9 +72,9 @@ public class OlciSlstrAcOp extends Operator {
         Product aotProduct;
         aotProduct = processAot(sourceProduct);
         if (aotProduct == AotMasterOp.EMPTY_PRODUCT) {
-                Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
-                setTargetProduct(AotMasterOp.EMPTY_PRODUCT);
-                return;
+            Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
+            setTargetProduct(AotMasterOp.EMPTY_PRODUCT);
+            return;
         }
 
         if (aotOnly) {
@@ -84,10 +84,10 @@ public class OlciSlstrAcOp extends Operator {
         }
 
         if (copyAotBands && !aotOnly) {
-                ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
-                ProductUtils.copyBand(OlciSlstrAcConstants.AOT_ERR_BAND_NAME, aotProduct, getTargetProduct(), true);
-            if (aotProduct.containsBand(AotConsts.aotFlags.name)){
-                ProductUtils.copyBand(AotConsts.aotFlags.name, aotProduct, getTargetProduct(),true);
+            ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
+            ProductUtils.copyBand(OlciSlstrAcConstants.AOT_ERR_BAND_NAME, aotProduct, getTargetProduct(), true);
+            if (aotProduct.containsBand(AotConsts.aotFlags.name)) {
+                ProductUtils.copyBand(AotConsts.aotFlags.name, aotProduct, getTargetProduct(), true);
             }
 
         }
@@ -122,9 +122,9 @@ public class OlciSlstrAcOp extends Operator {
             } else {
                 return Sensor.OLCI_SLSTR_S3B;
             }
-        }    else {
+        } else {
             throw new OperatorException(String.format("Product of type '%s' not supported.",
-                    l1bProduct.getProductType()));
+                                                      l1bProduct.getProductType()));
         }
     }
 
@@ -139,7 +139,6 @@ public class OlciSlstrAcOp extends Operator {
 
         return aotMasterOp.getTargetProduct();
     }
-
 
 
     private Product processSdr(Product sourceProduct, Product aotProduct) {

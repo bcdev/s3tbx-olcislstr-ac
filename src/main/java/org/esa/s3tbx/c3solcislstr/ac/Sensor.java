@@ -26,70 +26,70 @@ public enum Sensor {
     // todo: define all numbers as constants
 
     OLCI_SLSTR_S3A("OLCI_SLSTR_S3A", 27, 15, 0.02, 0.005,
-            OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_TOA_BAND_NAMES,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
-            OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_ANCILLARY_BAND_NAMES,
-            OLCI_SLSTR_SDR_BAND_NAMES,
-            OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
-            OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
-            OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
-            OLCI_SLSTR_OZO_TP_NAME,
-            OLCI_SLSTR_SURF_PRESS_TP_NAME,
-            OLCI_SLSTR_WATERVAPOR_TP_NAME,
-            OLCI_SLSTR_NDVI_BAND_NAME,
-            OLCI_SLSTR_NDVI_EXPR,
-            OLCI_SLSTR_NIR_NAME,
-            OLCI_SLSTR_VALID_EXPR,
-            OLCI_SLSTR_AOT_OUT_EXPR,
-            OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR),
+                   OLCI_SLSTR_CALIBRATION_COEFFS,
+                   OLCI_SLSTR_TOA_BAND_NAMES,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                   OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
+                   OLCI_SLSTR_ANCILLARY_BAND_NAMES,
+                   OLCI_SLSTR_SDR_BAND_NAMES,
+                   OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
+                   OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
+                   OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
+                   OLCI_SLSTR_OZO_TP_NAME,
+                   OLCI_SLSTR_SURF_PRESS_TP_NAME,
+                   OLCI_SLSTR_WATERVAPOR_TP_NAME,
+                   OLCI_SLSTR_NDVI_BAND_NAME,
+                   OLCI_SLSTR_NDVI_EXPR,
+                   OLCI_SLSTR_NIR_NAME,
+                   OLCI_SLSTR_VALID_EXPR,
+                   OLCI_SLSTR_AOT_OUT_EXPR,
+                   OLCI_SLSTR_SPEC_WEIGHTS,
+                   LAND_EXPR_OLCI_SLSTR),
 
     OLCI_SLSTR_S3B("OLCI_SLSTR_S3B", 27, 15, 0.02, 0.005,
-            OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_TOA_BAND_NAMES,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
-            OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_ANCILLARY_BAND_NAMES,
-            OLCI_SLSTR_SDR_BAND_NAMES,
-            OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
-            OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
-            OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
-            OLCI_SLSTR_OZO_TP_NAME,
-            OLCI_SLSTR_SURF_PRESS_TP_NAME,
-            OLCI_SLSTR_WATERVAPOR_TP_NAME,
-            OLCI_SLSTR_NDVI_BAND_NAME,
-            OLCI_SLSTR_NDVI_EXPR,
-            OLCI_SLSTR_NIR_NAME,
-            OLCI_SLSTR_VALID_EXPR,
-            OLCI_SLSTR_AOT_OUT_EXPR,
-            OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR),
+                   OLCI_SLSTR_CALIBRATION_COEFFS,
+                   OLCI_SLSTR_TOA_BAND_NAMES,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                   OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
+                   OLCI_SLSTR_ANCILLARY_BAND_NAMES,
+                   OLCI_SLSTR_SDR_BAND_NAMES,
+                   OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
+                   OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
+                   OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
+                   OLCI_SLSTR_OZO_TP_NAME,
+                   OLCI_SLSTR_SURF_PRESS_TP_NAME,
+                   OLCI_SLSTR_WATERVAPOR_TP_NAME,
+                   OLCI_SLSTR_NDVI_BAND_NAME,
+                   OLCI_SLSTR_NDVI_EXPR,
+                   OLCI_SLSTR_NIR_NAME,
+                   OLCI_SLSTR_VALID_EXPR,
+                   OLCI_SLSTR_AOT_OUT_EXPR,
+                   OLCI_SLSTR_SPEC_WEIGHTS,
+                   LAND_EXPR_OLCI_SLSTR),
 
     OLCI_SLSTR_NOMINAL("OLCI_SLSTR_NOMINAL", 27, 15, 0.02, 0.005,
-            OLCI_SLSTR_CALIBRATION_COEFFS,
-            OLCI_SLSTR_TOA_BAND_NAMES,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-            OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
-            OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
-            OLCI_SLSTR_ANCILLARY_BAND_NAMES,
-            OLCI_SLSTR_SDR_BAND_NAMES,
-            OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
-            OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
-            OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
-            OLCI_SLSTR_OZO_TP_NAME,
-            OLCI_SLSTR_SURF_PRESS_TP_NAME,
-            OLCI_SLSTR_WATERVAPOR_TP_NAME,
-            OLCI_SLSTR_NDVI_BAND_NAME,
-            OLCI_SLSTR_NDVI_EXPR,
-            OLCI_SLSTR_NIR_NAME,
-            OLCI_SLSTR_VALID_EXPR,
-            OLCI_SLSTR_AOT_OUT_EXPR,
-            OLCI_SLSTR_SPEC_WEIGHTS,
-            LAND_EXPR_OLCI_SLSTR);
+                       OLCI_SLSTR_CALIBRATION_COEFFS,
+                       OLCI_SLSTR_TOA_BAND_NAMES,
+                       OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
+                       OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                       OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
+                       OLCI_SLSTR_ANCILLARY_BAND_NAMES,
+                       OLCI_SLSTR_SDR_BAND_NAMES,
+                       OLCI_SLSTR_SDR_ERROR_BAND_NAMES,
+                       OLCI_SLSTR_GEOM_BAND_NAMES_OLCI,
+                       OLCI_SLSTR_GEOM_BAND_NAMES_SLSTR_NADIR,
+                       OLCI_SLSTR_OZO_TP_NAME,
+                       OLCI_SLSTR_SURF_PRESS_TP_NAME,
+                       OLCI_SLSTR_WATERVAPOR_TP_NAME,
+                       OLCI_SLSTR_NDVI_BAND_NAME,
+                       OLCI_SLSTR_NDVI_EXPR,
+                       OLCI_SLSTR_NIR_NAME,
+                       OLCI_SLSTR_VALID_EXPR,
+                       OLCI_SLSTR_AOT_OUT_EXPR,
+                       OLCI_SLSTR_SPEC_WEIGHTS,
+                       LAND_EXPR_OLCI_SLSTR);
 
     private final String name;
     private final int numBands;
@@ -121,7 +121,7 @@ public enum Sensor {
     Sensor(String name, int numBands, int numBandsAotCorr, double radiometricError,
            double rtmError, float[] calCoeff,
            String[] toaBandNames, String[] toaBandNamesToCorrected, int[] toaBandNamesToCorrectedBinaer,
-           String [] toaBandNamesMerisHeritage,
+           String[] toaBandNamesMerisHeritage,
            String[] ancillaryBandNames, String[] sdrBandBandNames, String[] sdrErrorBandNames,
            String[] geomBandNamesOlci, String[] geomBandNamesSlstrNadir,
            String ozoneBandNames, String surfPressBandName, String wvBandName, String ndviBandName, String ndviExpr,
@@ -136,7 +136,7 @@ public enum Sensor {
         this.calCoeff = calCoeff;
         this.toaBandNames = toaBandNames;
         this.toaBandNamesToCorrected = toaBandNamesToCorrected;
-        this.toaBandNamesToCorrectedBinaer= toaBandNamesToCorrectedBinaer;
+        this.toaBandNamesToCorrectedBinaer = toaBandNamesToCorrectedBinaer;
         this.toaBandNamesMerisHeritage = toaBandNamesMerisHeritage;
         this.ancillaryBandNames = ancillaryBandNames;
         this.sdrBandNames = sdrBandBandNames;
@@ -163,7 +163,9 @@ public enum Sensor {
         return numBands;
     }
 
-    public int getNumBandsAotCorr() {return numBandsAotCorr; }
+    public int getNumBandsAotCorr() {
+        return numBandsAotCorr;
+    }
 
     /**
      * a priori radiometric error (%)
@@ -187,11 +189,15 @@ public enum Sensor {
     public String[] getToaBandNamesToCorrected() {
         return toaBandNamesToCorrected;
     }
+
     public int[] gettoaBandNamesToCorrectedBinaer() {
         return toaBandNamesToCorrectedBinaer;
     }
 
-    public String[] getToaBandNamesMerisHeritage() {return toaBandNamesMerisHeritage; }
+    public String[] getToaBandNamesMerisHeritage() {
+        return toaBandNamesMerisHeritage;
+    }
+
     public String[] getAncillaryBandNames() {
         return ancillaryBandNames;
     }

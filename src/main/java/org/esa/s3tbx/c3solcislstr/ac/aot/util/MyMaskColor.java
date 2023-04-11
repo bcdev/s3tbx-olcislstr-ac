@@ -5,16 +5,15 @@
 
 package org.esa.s3tbx.c3solcislstr.ac.aot.util;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- *
  * @author akheckel
  */
-public class MyMaskColor implements Iterable<Color>, Iterator<Color>{
-    ArrayList<Color> cl = new ArrayList<Color>();
+public class MyMaskColor implements Iterable<Color>, Iterator<Color> {
+    ArrayList<Color> cl = new ArrayList<>();
     private int index = 0;
 
     public MyMaskColor() {
@@ -27,8 +26,8 @@ public class MyMaskColor implements Iterable<Color>, Iterator<Color>{
         cl.add(Color.MAGENTA);
         cl.add(Color.GRAY);
         int n = cl.size();
-        for (int i=0; i<n; i++) cl.add(cl.get(i).brighter());
-        for (int i=0; i<n; i++) cl.add(cl.get(i).darker());
+        for (int i = 0; i < n; i++) cl.add(cl.get(i).brighter());
+        for (int i = 0; i < n; i++) cl.add(cl.get(i).darker());
     }
 
     @Override
@@ -43,7 +42,7 @@ public class MyMaskColor implements Iterable<Color>, Iterator<Color>{
 
     @Override
     public Color next() {
-        if (index == cl.size()-1){
+        if (index == cl.size() - 1) {
             index = 0;
         }
         return cl.get(index++);

@@ -8,7 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot;
 import org.esa.s3tbx.c3solcislstr.ac.aot.util.PixelGeometry;
 
 /**
- *
  * @author akheckel
  */
 public class InputPixelData {
@@ -22,7 +21,7 @@ public class InputPixelData {
     public final double[] surfReflec;
     public final double[] diffuseFrac;
 
-    public InputPixelData(PixelGeometry geomOlci,  double surfPressure, double o3du,
+    public InputPixelData(PixelGeometry geomOlci, double surfPressure, double o3du,
                           double wvCol, float[] specWvl, double[] toaReflecOlci) {
         this.geomOlci = geomOlci;
         this.surfPressure = surfPressure;

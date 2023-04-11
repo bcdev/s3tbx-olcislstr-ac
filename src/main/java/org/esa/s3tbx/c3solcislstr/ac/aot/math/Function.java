@@ -8,10 +8,10 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.math;
 public interface Function {
 
     /**
-     *  Univariate function definition
+     * Univariate function definition
      *
-     *@param  x  - input value
-     *@return      return value
+     * @param x - input value
+     * @return return value
      */
     double f(double x);
 }

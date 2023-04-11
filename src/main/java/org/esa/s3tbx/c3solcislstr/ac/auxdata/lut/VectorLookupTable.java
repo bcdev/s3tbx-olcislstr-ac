@@ -202,7 +202,7 @@ public class VectorLookupTable implements MultivariateLookupTable {
         for (int i = 0; i < slices.length; ++i) {
             values.getValues(origin + o[i], slices[i]);
         }
-        for (int i = dimensions.length; i-- > 0;) {
+        for (int i = dimensions.length; i-- > 0; ) {
             final int m = 1 << i;
             final double f = fracIndexes[i].f;
 
@@ -289,7 +289,6 @@ public class VectorLookupTable implements MultivariateLookupTable {
      * Returns the number of vertices in the coordinate grid defined by the given dimensions.
      *
      * @param dimensions the dimensions defining the coordinate grid.
-     *
      * @return the number of vertices.
      */
     static int getVertexCount(final IntervalPartition[] dimensions) {

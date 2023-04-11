@@ -7,15 +7,20 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.util;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.aot.AotConsts;
-import org.esa.snap.core.datamodel.*;
+import org.esa.snap.core.datamodel.Band;
+import org.esa.snap.core.datamodel.FlagCoding;
+import org.esa.snap.core.datamodel.Mask;
+import org.esa.snap.core.datamodel.MetadataAttribute;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductNodeGroup;
+import org.esa.snap.core.datamodel.RasterDataNode;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.util.Guardian;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.IOException;
 
 /**
- *
  * @author akheckel
  */
 public class AerosolUtils {
@@ -28,9 +33,9 @@ public class AerosolUtils {
         MyMaskColor mColor = new MyMaskColor();
         ProductNodeGroup<Mask> tarMG = targetProduct.getMaskGroup();
         ProductNodeGroup<FlagCoding> tarFCG = targetProduct.getFlagCodingGroup();
-        for (int node=0; node<tarFCG.getNodeCount(); node++){
+        for (int node = 0; node < tarFCG.getNodeCount(); node++) {
             FlagCoding fc = tarFCG.get(node);
-            for (int i=0; i<fc.getNumAttributes(); i++){
+            for (int i = 0; i < fc.getNumAttributes(); i++) {
                 MetadataAttribute f = fc.getAttributeAt(i);
                 String expr = fc.getName() + "." + f.getName();
                 Mask m = Mask.BandMathsType.create(f.getName(), f.getDescription(), w, h, expr, mColor.next(), 0.5);

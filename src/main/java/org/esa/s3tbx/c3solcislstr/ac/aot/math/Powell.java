@@ -18,7 +18,6 @@ public class Powell {
      * @param ftol fractional tolerance in function value
      * @param func function to be minimised
      * @return the minimum
-     *
      * @throws IllegalMonitorStateException Description of Exception
      * @throws IllegalArgumentException     Description of Exception
      */

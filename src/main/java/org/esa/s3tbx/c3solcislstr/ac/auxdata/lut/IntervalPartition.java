@@ -33,7 +33,6 @@ public class IntervalPartition {
      *
      * @param sequence the sequence. The sequence must increase or decrease strictly and
      *                 consist of at least two real numbers.
-     *
      * @throws IllegalArgumentException if the sequence is not strictly monotonous
      *                                  or consists of less than two real numbers.
      * @throws NullPointerException     if the sequence is {@code null}.
@@ -47,7 +46,6 @@ public class IntervalPartition {
      *
      * @param sequence the sequence. The sequence must increase or decrease strictly and
      *                 consist of at least two real numbers.
-     *
      * @throws IllegalArgumentException if the sequence is not strictly monotonous
      *                                  or consists of less than two real numbers.
      * @throws NullPointerException     if the sequence is {@code null}.
@@ -71,9 +69,7 @@ public class IntervalPartition {
      *
      * @param sequences the array of sequences. Each sequence must increase or decrease
      *                  strictly and consist of at least two real numbers.
-     *
      * @return the created array of interval partitions.
-     *
      * @throws IllegalArgumentException if the length of the sequence array is zero
      *                                  or any sequence is not strictly monotonous
      *                                  or consists of less than two real numbers.
@@ -102,9 +98,7 @@ public class IntervalPartition {
      *
      * @param sequences the array of sequences. Each sequence must increase or decrease
      *                  strictly and consist of at least two real numbers.
-     *
      * @return the created array of interval partitions.
-     *
      * @throws IllegalArgumentException if the length of the sequence array is zero
      *                                  or any sequence is not strictly monotonous
      *                                  or consists of less than two real numbers.
@@ -141,7 +135,6 @@ public class IntervalPartition {
      * Returns the ith number in the interval partition.
      *
      * @param i the index number of the real number of interest.
-     *
      * @return the ith real number.
      */
     public final double get(int i) {

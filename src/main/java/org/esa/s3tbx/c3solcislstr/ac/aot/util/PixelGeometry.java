@@ -6,7 +6,6 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot.util;
 
 /**
- *
  * @author akheckel
  */
 public class PixelGeometry {
@@ -17,7 +16,7 @@ public class PixelGeometry {
     public PixelGeometry(double sza, double saa, double vza, double vaa) {
         this.sza = (float) sza;
         this.vza = (float) vza;
-        this.razi = getRelativeAzi((float)saa, (float)vaa);
+        this.razi = getRelativeAzi((float) saa, (float) vaa);
     }
 
     private float getRelativeAzi(float saa, float vaa) {

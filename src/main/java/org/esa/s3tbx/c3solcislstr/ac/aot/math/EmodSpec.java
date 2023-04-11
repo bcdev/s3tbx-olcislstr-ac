@@ -8,7 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot.math;
 /**
  * This class provides the spectrum model function to be minimised by Powell.
  * (see ATBD (4), (6))
- *
  */
 public class EmodSpec implements MvFunction {
 
@@ -46,7 +45,7 @@ public class EmodSpec implements MvFunction {
         // specSoil and specVeg should not be scaled negative
         if (p[0] < 0.0) resid = resid + p[0] * p[0] * 1000;
         if (p[1] < 0.0) resid = resid + p[1] * p[1] * 1000;
-        return(resid);
+        return resid;
     }
 
 }

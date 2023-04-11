@@ -37,7 +37,7 @@ import org.esa.snap.core.util.BitSetter;
 import org.esa.snap.core.util.ProductUtils;
 
 import javax.media.jai.BorderExtender;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Map;
 
 /**

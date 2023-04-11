@@ -22,7 +22,6 @@ public class Brent {
      * @param fun the function
      * @param tol tolerance
      * @return An array containing xmin and fx
-     *
      * @throws IllegalStateException Description of Exception
      */
     public static double[] brent(double ax, double bx, double cx, Function fun, double tol) throws IllegalStateException {

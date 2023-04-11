@@ -88,38 +88,37 @@ public class MomoLut {
      * todo add Javadoc
      *
      * @param inPix -
-     * @param tau -
+     * @param tau   -
      */
     public synchronized void getSdrAndDiffuseFrac(InputPixelData inPix, double tau) {
         Guardian.assertEquals("InputPixelData.nSpecWvl", inPix.nSpecWvl, nWvl);
         Guardian.assertNotNull("InputPixelData.diffuseFrac[][]", inPix.diffuseFrac);
         Guardian.assertNotNull("InputPixelData.surfReflec[][]", inPix.surfReflec);
         PixelGeometry geom;
-            geom =  inPix.geomOlci;
-            final double[] toaR =  inPix.toaReflec;
+        geom = inPix.geomOlci;
+        final double[] toaR = inPix.toaReflec;
         final double cosSza = Math.cos(Math.toRadians(geom.sza));
         final float geomAMF = (float) ((1 / cosSza
-                    + 1 / Math.cos(Math.toRadians(geom.vza))));
-            final double[] gasT = getGasTransmission(geomAMF, (float) inPix.wvCol, (float) (inPix.o3du / 1000));
-            double[][] lutValues = sdrLut.getValues(inPix.surfPressure, geom.vza, geom.sza, geom.razi, tau);
+                + 1 / Math.cos(Math.toRadians(geom.vza))));
+        final double[] gasT = getGasTransmission(geomAMF, (float) inPix.wvCol, (float) (inPix.o3du / 1000));
+        double[][] lutValues = sdrLut.getValues(inPix.surfPressure, geom.vza, geom.sza, geom.razi, tau);
 
-            for (int iWvl = 0; iWvl < inPix.nSpecWvl; iWvl++) {
-                double rhoPath = lutValues[iWvl][0] * Math.PI / cosSza;
-                double tupTdown = lutValues[iWvl][1] / cosSza;
-                double spherAlb = lutValues[iWvl][2];
-                //double tgO3 = Math.exp(inPix.o3du * o3corr[i] * geomAMF/2); // my o3 correction scheme uses AMF=SC/VC not AMF=SC
-                double toaCorr = toaR[iWvl] / gasT[iWvl];
-                double a = (toaCorr - rhoPath) / tupTdown;
-                inPix.surfReflec[iWvl] = a / (1 + spherAlb * a);
-                inPix.diffuseFrac[iWvl] = 1.0 - lutValues[iWvl][3];
-            }
+        for (int iWvl = 0; iWvl < inPix.nSpecWvl; iWvl++) {
+            double rhoPath = lutValues[iWvl][0] * Math.PI / cosSza;
+            double tupTdown = lutValues[iWvl][1] / cosSza;
+            double spherAlb = lutValues[iWvl][2];
+            //double tgO3 = Math.exp(inPix.o3du * o3corr[i] * geomAMF/2); // my o3 correction scheme uses AMF=SC/VC not AMF=SC
+            double toaCorr = toaR[iWvl] / gasT[iWvl];
+            double a = (toaCorr - rhoPath) / tupTdown;
+            inPix.surfReflec[iWvl] = a / (1 + spherAlb * a);
+            inPix.diffuseFrac[iWvl] = 1.0 - lutValues[iWvl][3];
+        }
     }
 
     /**
      * todo add Javadoc
      *
      * @param ipd -
-     *
      * @return -
      */
     public boolean isInsideLut(InputPixelData ipd) {
@@ -137,7 +136,6 @@ public class MomoLut {
      * todo add Javadoc
      *
      * @param ipd -
-     *
      * @return -
      */
     public synchronized double getMaxAOT(InputPixelData ipd) {

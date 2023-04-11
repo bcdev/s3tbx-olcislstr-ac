@@ -12,7 +12,12 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.common.BandMathsOp;
-import org.esa.snap.core.gpf.pointop.*;
+import org.esa.snap.core.gpf.pointop.PixelOperator;
+import org.esa.snap.core.gpf.pointop.ProductConfigurer;
+import org.esa.snap.core.gpf.pointop.Sample;
+import org.esa.snap.core.gpf.pointop.SourceSampleConfigurer;
+import org.esa.snap.core.gpf.pointop.TargetSampleConfigurer;
+import org.esa.snap.core.gpf.pointop.WritableSample;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.io.File;
@@ -72,7 +77,7 @@ public class SdrOlciSlstrOp extends PixelOperator {
 
     static final int SRC_DEM_OLCI = 10;
 
-//    static final int SRC_DEM_SLSTR = 11;
+    //    static final int SRC_DEM_SLSTR = 11;
     static final int SRC_AOT = 12;
     static final int SRC_AOT_ERR = 13;
     static final int SRC_OZONE = 14;
@@ -330,8 +335,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
 
         if (amf_olci < amfMinOlci || amf_olci > amfMaxOlci ||
                 amf_slstr < amfMinSlstr || amf_slstr > amfMaxSlstr ||
-                Double.isNaN(amf_olci) ||Double.isNaN(amf_slstr) ||
-                Double.isNaN(ozo) ||Double.isNaN(cwv)) {
+                Double.isNaN(amf_olci) || Double.isNaN(amf_slstr) ||
+                Double.isNaN(ozo) || Double.isNaN(cwv)) {
             OlciSlstrAcUtils.fillTargetSampleWithNoDataValue(targetSamples);
             return;
         }

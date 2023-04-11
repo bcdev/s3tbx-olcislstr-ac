@@ -6,7 +6,6 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
 /**
- *
  * @author akheckel
  */
 public class RetrievalResults {

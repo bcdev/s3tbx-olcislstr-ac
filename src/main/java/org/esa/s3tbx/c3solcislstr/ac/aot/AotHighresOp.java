@@ -9,7 +9,11 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcUtils;
 import org.esa.s3tbx.c3solcislstr.ac.Sensor;
-import org.esa.snap.core.datamodel.*;
+import org.esa.snap.core.datamodel.Band;
+import org.esa.snap.core.datamodel.FlagCoding;
+import org.esa.snap.core.datamodel.Mask;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductNodeGroup;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -22,7 +26,7 @@ import org.esa.snap.core.util.Guardian;
 import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.dataio.envisat.EnvisatConstants;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * Operator for final AOT retrieval on original high-resolution grid.
@@ -75,7 +79,7 @@ public class AotHighresOp extends Operator {
             if (instrument.equals("MERIS")) {
                 validExpression = "!l1_flags.INVALID && " + EnvisatConstants.MERIS_SUN_ZENITH_DS_NAME + " < 70";
             } else {
-                validExpression = OlciSlstrAcConstants.idepixFlagBandName + ".IDEPIX_LAND || " + OlciSlstrAcConstants.OLCI_SLSTR_SZA_TP_NAME + "<70";;
+                validExpression = OlciSlstrAcConstants.idepixFlagBandName + ".IDEPIX_LAND || " + OlciSlstrAcConstants.OLCI_SLSTR_SZA_TP_NAME + "<70";
             }
         } else {
             validExpression = sensor.getAotOutExpr();

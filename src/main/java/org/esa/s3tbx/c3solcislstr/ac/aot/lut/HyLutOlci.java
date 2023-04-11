@@ -16,7 +16,11 @@
 
 package org.esa.s3tbx.c3solcislstr.ac.aot.lut;
 
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.*;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.Array;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.IntervalPartition;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.MultivariateLookupTable;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.Remapped;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.VectorLookupTable;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
@@ -53,7 +57,7 @@ public class HyLutOlci implements Lut {
     }
 
     public static HyLutOlci read(String location, double[] arrayMinMax) throws IOException {
-        
+
         try (final NetcdfFile ncfile = NetcdfFiles.open(location)) {
             final Array aWav = readData(getVariable(ncfile, "wvl_c"));
             final int nWav = aWav.getLength();
@@ -121,7 +125,7 @@ public class HyLutOlci implements Lut {
             final MultivariateLookupTable lutDU = new Remapped(new VectorLookupTable(nWav, aDU, dDU), remapping);
             final MultivariateLookupTable lutTG = new Remapped(new VectorLookupTable(nWav, aTG, dTG), remapping);
 
-          return new HyLutOlci(lutRP, lutTD, lutTU, lutSA, lutDD, lutDU, lutTG);
+            return new HyLutOlci(lutRP, lutTD, lutTU, lutSA, lutDD, lutDU, lutTG);
         }
     }
 

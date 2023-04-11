@@ -14,12 +14,9 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
-import org.esa.snap.core.gpf.common.SubsetOp;
-import org.esa.snap.core.image.ImageManager;
 import org.esa.snap.core.util.ProductUtils;
 
-import java.awt.*;
-import java.util.HashMap;
+import java.awt.Rectangle;
 import java.util.Map;
 
 /**
@@ -87,8 +84,8 @@ public class AotOlciSlstrOp extends Operator {
         final int rasterWidth = szaSubProduct.getSceneRasterWidth();
         final int rasterHeight = szaSubProduct.getSceneRasterHeight();
         targetProduct = new Product(szaSubProduct.getName(),
-                szaSubProduct.getProductType(),
-                rasterWidth, rasterHeight);
+                                    szaSubProduct.getProductType(),
+                                    rasterWidth, rasterHeight);
         targetProduct.setStartTime(szaSubProduct.getStartTime());
         targetProduct.setEndTime(szaSubProduct.getEndTime());
         targetProduct.setPointingFactory(szaSubProduct.getPointingFactory());
@@ -107,8 +104,8 @@ public class AotOlciSlstrOp extends Operator {
         if (needSurfacePres) {
             String presExpr = "(1013.25 * exp(-elevation/8400))";
             surfPresBand = new VirtualBand("surfPressEstimate",
-                    ProductData.TYPE_FLOAT32,
-                    rasterWidth, rasterHeight, presExpr);
+                                           ProductData.TYPE_FLOAT32,
+                                           rasterWidth, rasterHeight, presExpr);
             surfPresBand.setDescription("estimated sea level pressure (p0=1013.25hPa, hScale=8.4km)");
             surfPresBand.setNoDataValue(0);
             surfPresBand.setNoDataValueUsed(true);

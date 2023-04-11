@@ -8,7 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac.aot;
 import org.esa.snap.core.datamodel.ProductData;
 
 /**
- *
  * @author akheckel
  */
 public enum AotConsts {
@@ -24,7 +23,7 @@ public enum AotConsts {
     public final boolean noDataUsed;
     public final double scale;
     public final double offset;
-    
+
     AotConsts(String name, String description, String unit, int type,
               double noDataValue, boolean noDataUsed,
               double scale, double offset) {

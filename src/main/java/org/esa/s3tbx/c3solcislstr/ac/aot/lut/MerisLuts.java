@@ -28,6 +28,7 @@ import java.nio.ByteOrder;
 public class MerisLuts {
     private static final String merisAotLutFileName = "MERIS/MERIS_LUT_MOMO_ContinentalI_80_SDR_noG_v2.bin";
     private static final String merisCwvLutFileName = "MERIS/MERIS_LUT_6S_Tg_CWV_OZO.bin";
+
     public static ImageInputStream getAotLutData() {
         return openStream(merisAotLutFileName);
     }

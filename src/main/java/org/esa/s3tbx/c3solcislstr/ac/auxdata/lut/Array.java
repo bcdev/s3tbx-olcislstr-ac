@@ -64,7 +64,7 @@ public interface Array {
      * Gets a slice of values from the primitive array wrapped, starting at a given index.
      *
      * @param start The start index.
-     * @param slice  The slice of values (on return).
+     * @param slice The slice of values (on return).
      */
     void getValues(int start, double[] slice);
 
@@ -82,9 +82,9 @@ public interface Array {
 
     Array reordered(int[] reordering, int[] cardinals);
 
-        /**
-         * Class for wrapping {@code double} primitive arrays.
-         */
+    /**
+     * Class for wrapping {@code double} primitive arrays.
+     */
     final class Double implements Array {
         private final double[] values;
 
@@ -96,17 +96,17 @@ public interface Array {
         }
 
         @Override
-        public final int getLength() {
+        public int getLength() {
             return values.length;
         }
 
         @Override
-        public final double getValue(int i) {
+        public double getValue(int i) {
             return values[i];
         }
 
         @Override
-        public final void getValues(int start, double[] slice) {
+        public void getValues(int start, double[] slice) {
             System.arraycopy(this.values, start, slice, 0, slice.length);
         }
 
@@ -154,17 +154,17 @@ public interface Array {
         }
 
         @Override
-        public final int getLength() {
+        public int getLength() {
             return values.length;
         }
 
         @Override
-        public final double getValue(int i) {
+        public double getValue(int i) {
             return values[i];
         }
 
         @Override
-        public final void getValues(int start, double[] slice) {
+        public void getValues(int start, double[] slice) {
             for (int i = 0; i < slice.length; ++i) {
                 slice[i] = values[start + i];
             }

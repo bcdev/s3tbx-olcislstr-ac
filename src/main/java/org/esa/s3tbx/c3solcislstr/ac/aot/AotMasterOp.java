@@ -18,7 +18,8 @@ import org.esa.snap.core.util.ProductUtils;
 import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedOp;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.RenderingHints;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,7 +103,7 @@ public class AotMasterOp extends Operator {
         RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
 
         Product reflProduct;
-        if (sensor == Sensor.OLCI_SLSTR_NOMINAL || sensor == Sensor.OLCI_SLSTR_S3A || sensor == Sensor.OLCI_SLSTR_S3B)  {
+        if (sensor == Sensor.OLCI_SLSTR_NOMINAL || sensor == Sensor.OLCI_SLSTR_S3A || sensor == Sensor.OLCI_SLSTR_S3B) {
             AotOlciSlstrOp aotOlciSlstrOp = new AotOlciSlstrOp();
             aotOlciSlstrOp.setSourceProduct(sourceProduct);
             aotOlciSlstrOp.setParameterDefaultValues();
@@ -122,12 +123,12 @@ public class AotMasterOp extends Operator {
             ParameterBlockJAI pb = new ParameterBlockJAI("constant");
             pb.setParameter("width", (float) sourceProduct.getSceneRasterWidth());
             pb.setParameter("height", (float) sourceProduct.getSceneRasterHeight());
-            
-            pb.setParameter("bandvalues", new Float[] { constantAotValue });
+
+            pb.setParameter("bandvalues", new Float[]{constantAotValue});
             RenderedOp constImageAot = JAI.create("constant", pb);
             aotBand.setSourceImage(constImageAot);
 
-            pb.setParameter("bandvalues", new Float[] { 0.0f });
+            pb.setParameter("bandvalues", new Float[]{0.0f});
             RenderedOp constImageAotErr = JAI.create("constant", pb);
             aotErrBand.setSourceImage(constImageAotErr);
 
@@ -195,7 +196,7 @@ public class AotMasterOp extends Operator {
             copyBand = copyBand || (sourceBandName.equals("altitude"));     // todo: check if needed!
             copyBand = copyBand || (gaCopyCTP && sourceBandName.equals("cloud_top_press"));
 
-            if (copyBand && !tarP.containsBand(sourceBandName) ) {
+            if (copyBand && !tarP.containsBand(sourceBandName)) {
                 ProductUtils.copyBand(sourceBandName, reflProduct, tarP, true);
             }
         }

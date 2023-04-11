@@ -8,7 +8,14 @@ import org.esa.s3tbx.c3solcislstr.ac.aot.lut.MomoLut;
 import org.esa.s3tbx.c3solcislstr.ac.aot.math.BrentFitFunction;
 import org.esa.s3tbx.c3solcislstr.ac.aot.util.AerosolUtils;
 import org.esa.s3tbx.c3solcislstr.ac.aot.util.PixelGeometry;
-import org.esa.snap.core.datamodel.*;
+import org.esa.snap.core.datamodel.Band;
+import org.esa.snap.core.datamodel.GeoCoding;
+import org.esa.snap.core.datamodel.GeoPos;
+import org.esa.snap.core.datamodel.PixelPos;
+import org.esa.snap.core.datamodel.Product;
+import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.RasterDataNode;
+import org.esa.snap.core.datamodel.VirtualBand;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -21,7 +28,7 @@ import org.esa.snap.core.util.Guardian;
 
 import javax.imageio.stream.ImageInputStream;
 import javax.media.jai.BorderExtender;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,13 +68,16 @@ public class AotLowresOp extends Operator {
     @Parameter(defaultValue = "false", label = " If set, AOT are computed everywhere (brute force, ignores clouds etc.)")
     private boolean computeAotEverywhere;
 
+    @Parameter(defaultValue = "0.2")
+    private float ndviThreshold;
+
     @SourceProduct
     private Product sourceProduct;
 
     @TargetProduct
     private Product targetProduct;
 
-    private String SurfaceSpecName = "surface_reflectance_spec.asc";
+    private static final String SURFACE_SPEC_NAME = "surface_reflectance_spec.asc";
 
     private String productName;
     private String productType;
@@ -83,7 +93,7 @@ public class AotLowresOp extends Operator {
     private String wvColName;
     private String validName;
     private String ndviName;
-//    private float wvCol = 2.5f;
+    //    private float wvCol = 2.5f;
     private int srcRasterWidth;
     private int srcRasterHeight;
     private int tarRasterWidth;
@@ -101,9 +111,6 @@ public class AotLowresOp extends Operator {
     private Band aotErrorBand;
     private Band latBand;
 
-    @Parameter(defaultValue = "0.2")
-    private float ndviThreshold;
-
     private final boolean addFitBands = false;
     private Map<String, Double> sourceNoDataValues;
 
@@ -118,7 +125,7 @@ public class AotLowresOp extends Operator {
         specBandNames = sensor.getToaBandNamesMerisHeritage();
         ozoneName = sensor.getOzoneBandNames();
         surfPresName = sensor.getSurfPressBandName();
-        wvColName =sensor.getWvBandName();
+        wvColName = sensor.getWvBandName();
         ndviName = sensor.getNdviBandName();
 
         String validExpression;
@@ -140,7 +147,7 @@ public class AotLowresOp extends Operator {
         specWeights = sensor.getSpecWeights();
         specWvl = getSpectralWvl(specBandNames);
         nSpecWvl = specWvl[0].length;
-        readSurfaceSpectra(SurfaceSpecName);
+        readSurfaceSpectra(SURFACE_SPEC_NAME);
 
         if (!sourceProduct.containsRasterDataNode(ozoneName)) {
             createConstOzoneBand();
@@ -229,7 +236,7 @@ public class AotLowresOp extends Operator {
         PixelGeometry geomOlci;
         double[] toaRefl = new double[nSpecWvl];
         int skip = 0;
-        geomOlci= new PixelGeometry(tileValues[0], tileValues[1], tileValues[2], tileValues[3]);
+        geomOlci = new PixelGeometry(tileValues[0], tileValues[1], tileValues[2], tileValues[3]);
         skip += 4;
         System.arraycopy(tileValues, skip, toaRefl, 0, nSpecWvl);
         skip += nSpecWvl;
@@ -240,7 +247,7 @@ public class AotLowresOp extends Operator {
         } else {
             o3DU = ensureO3DobsonUnits(tileValues[skip + 1]);
         }
-        double wvCol = tileValues[skip +2];
+        double wvCol = tileValues[skip + 2];
         return new InputPixelData(geomOlci, surfP, o3DU, wvCol, specWvl[0], toaRefl);
     }
 
@@ -533,7 +540,8 @@ public class AotLowresOp extends Operator {
         }
         return false;
     }
-//     Tests uniformity on the given bin pixel (e.g. 9x9 block)
+
+    //     Tests uniformity on the given bin pixel (e.g. 9x9 block)
 //     based on the NIR reflectance (max - min < 0.2)
     private boolean uniformityTest(Map<String, Tile> sourceTiles, int iX, int iY) {
         String nirName = sensor.getNirName();
