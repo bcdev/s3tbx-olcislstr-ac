@@ -117,6 +117,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
     private double amfMinSlstr;
     private double amfMaxSlstr;
 
+    private double[] geophysicalNoDataValues;
+
 
     @Override
     protected void prepareInputs() throws OperatorException {
@@ -138,6 +140,13 @@ public class SdrOlciSlstrOp extends PixelOperator {
 //        aux = SdrAuxdata.getInstance(sensor);
         //TODO check LUT vza range [60-0] instead of [0, 60]
         initMinMaxInputValues();
+        geophysicalNoDataValues = new double[sensor.getNumBands()];
+        if (SRC_TOA_RFL + sensor.getNumBands() > getSourceProduct().getNumBands()) {
+            throw new IllegalArgumentException(sensor.getNumBands() + " sensor bands starting at " + SRC_TOA_RFL + ", but " + getSourceProduct().getNumBands() + " source product bands");
+        }
+        for (int bandIndex = 0; bandIndex < sensor.getNumBands(); ++bandIndex) {
+            geophysicalNoDataValues[bandIndex] = getSourceProduct().getBandAt(SRC_TOA_RFL + bandIndex).getGeophysicalNoDataValue();
+        }
     }
 
     @Override
@@ -330,8 +339,12 @@ public class SdrOlciSlstrOp extends PixelOperator {
         double[] toa_rfl = new double[sensor.getNumBands()];
         for (int i = 0; i < toa_rfl.length; i++) {
             double toaRefl = sourceSamples[SRC_TOA_RFL + i].getDouble();
-            toaRefl /= sensor.getCalCoeff()[i];
-            toa_rfl[i] = toaRefl;
+            if (toaRefl != geophysicalNoDataValues[i]) {
+                toa_rfl[i] = toaRefl / sensor.getCalCoeff()[i];
+            } else {
+                toa_rfl[i] = Double.NaN;
+
+            }
         }
 
         if (ozo <= ozoMinOlci || ozo <= ozoMinSlstr) {
