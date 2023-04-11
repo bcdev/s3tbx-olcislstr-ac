@@ -89,7 +89,7 @@ public class OlciSlstrAcConstants {
 
     // SLSTR S1 – S5, S6 channels
     //All OLCI channels except Oa13, Oa14, Oa15, Oa19 and Oa20
-    final static String[] OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD = new String[]{
+    final static String[] OLCI_SLSTR_TOA_BAND_NAMES_TO_BE_CORRECTED = new String[]{
             "Oa01_reflectance", "Oa02_reflectance", "Oa03_reflectance", "Oa04_reflectance", "Oa05_reflectance",
             "Oa06_reflectance", "Oa07_reflectance", "Oa08_reflectance", "Oa09_reflectance", "Oa10_reflectance",
             "Oa11_reflectance", "Oa12_reflectance",
@@ -107,14 +107,14 @@ public class OlciSlstrAcConstants {
             "sdr_Sl01", "sdr_Sl02", "sdr_Sl03",
             "sdr_Sl05", "sdr_Sl06"};
 
-    final static int[] OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER = {
-            1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1,
-            1, 1, 0, 0, 0,
-            1, 1, 1, 0, 0,
-            1,
-            1, 1, 1,
-            0, 1, 1};
+    final static boolean[] OLCI_SLSTR_TOA_BAND_IS_TO_BE_CORRECTED = {
+            true, true, true, true, true,
+            true, true, true, true, true,
+            true, true, false, false, false,
+            true, true, true, false, false,
+            true,
+            true, true, true,
+            false, true, true};
 
     final static String[] OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE = new String[]{
             "Oa02_reflectance", "Oa03_reflectance", "Oa04_reflectance", "Oa05_reflectance",

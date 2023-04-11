@@ -28,8 +28,8 @@ public enum Sensor {
     OLCI_SLSTR_S3A("OLCI_SLSTR_S3A", 27, 15, 0.02, 0.005,
                    OLCI_SLSTR_CALIBRATION_COEFFS,
                    OLCI_SLSTR_TOA_BAND_NAMES,
-                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_BE_CORRECTED,
+                   OLCI_SLSTR_TOA_BAND_IS_TO_BE_CORRECTED,
                    OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
                    OLCI_SLSTR_ANCILLARY_BAND_NAMES,
                    OLCI_SLSTR_SDR_BAND_NAMES,
@@ -50,8 +50,8 @@ public enum Sensor {
     OLCI_SLSTR_S3B("OLCI_SLSTR_S3B", 27, 15, 0.02, 0.005,
                    OLCI_SLSTR_CALIBRATION_COEFFS,
                    OLCI_SLSTR_TOA_BAND_NAMES,
-                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-                   OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                   OLCI_SLSTR_TOA_BAND_NAMES_TO_BE_CORRECTED,
+                   OLCI_SLSTR_TOA_BAND_IS_TO_BE_CORRECTED,
                    OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
                    OLCI_SLSTR_ANCILLARY_BAND_NAMES,
                    OLCI_SLSTR_SDR_BAND_NAMES,
@@ -72,8 +72,8 @@ public enum Sensor {
     OLCI_SLSTR_NOMINAL("OLCI_SLSTR_NOMINAL", 27, 15, 0.02, 0.005,
                        OLCI_SLSTR_CALIBRATION_COEFFS,
                        OLCI_SLSTR_TOA_BAND_NAMES,
-                       OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTD,
-                       OLCI_SLSTR_TOA_BAND_NAMES_TO_CORRECTED_BINAER,
+                       OLCI_SLSTR_TOA_BAND_NAMES_TO_BE_CORRECTED,
+                       OLCI_SLSTR_TOA_BAND_IS_TO_BE_CORRECTED,
                        OLCI_SLSTR_TOA_BAND_NAMES_MERIS_HERITTAGE,
                        OLCI_SLSTR_ANCILLARY_BAND_NAMES,
                        OLCI_SLSTR_SDR_BAND_NAMES,
@@ -98,8 +98,8 @@ public enum Sensor {
     private final double rtmError;
     private final float[] calCoeff;
     private final String[] toaBandNames;
-    private final String[] toaBandNamesToCorrected;
-    private final int[] toaBandNamesToCorrectedBinaer;
+    private final String[] toaBandNamesToBeCorrected;
+    private final boolean[] toaBandIsToBeCorrected;
     private final String[] toaBandNamesMerisHeritage;
     private final String[] ancillaryBandNames;
     private final String[] sdrBandNames;
@@ -120,7 +120,7 @@ public enum Sensor {
 
     Sensor(String name, int numBands, int numBandsAotCorr, double radiometricError,
            double rtmError, float[] calCoeff,
-           String[] toaBandNames, String[] toaBandNamesToCorrected, int[] toaBandNamesToCorrectedBinaer,
+           String[] toaBandNames, String[] toaBandNamesToBeCorrected, boolean[] toaBandIsToBeCorrected,
            String[] toaBandNamesMerisHeritage,
            String[] ancillaryBandNames, String[] sdrBandBandNames, String[] sdrErrorBandNames,
            String[] geomBandNamesOlci, String[] geomBandNamesSlstrNadir,
@@ -135,8 +135,8 @@ public enum Sensor {
         this.rtmError = rtmError;
         this.calCoeff = calCoeff;
         this.toaBandNames = toaBandNames;
-        this.toaBandNamesToCorrected = toaBandNamesToCorrected;
-        this.toaBandNamesToCorrectedBinaer = toaBandNamesToCorrectedBinaer;
+        this.toaBandNamesToBeCorrected = toaBandNamesToBeCorrected;
+        this.toaBandIsToBeCorrected = toaBandIsToBeCorrected;
         this.toaBandNamesMerisHeritage = toaBandNamesMerisHeritage;
         this.ancillaryBandNames = ancillaryBandNames;
         this.sdrBandNames = sdrBandBandNames;
@@ -186,12 +186,12 @@ public enum Sensor {
         return toaBandNames;
     }
 
-    public String[] getToaBandNamesToCorrected() {
-        return toaBandNamesToCorrected;
+    public String[] getToaBandNamesToBeCorrected() {
+        return toaBandNamesToBeCorrected;
     }
 
-    public int[] gettoaBandNamesToCorrectedBinaer() {
-        return toaBandNamesToCorrectedBinaer;
+    public boolean isToaBandToBeCorrected(int i) {
+        return toaBandIsToBeCorrected[i];
     }
 
     public String[] getToaBandNamesMerisHeritage() {

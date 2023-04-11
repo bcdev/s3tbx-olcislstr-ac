@@ -59,7 +59,6 @@ public class AotMasterOp extends Operator {
     @Parameter(defaultValue = "0.3")
     private float ndviThr;
 
-
     @Parameter(defaultValue = "false",
             label = " If set, AOT retrieval is skipped and a constant value shall be used in AC")
     private boolean useConstantAot;

@@ -171,8 +171,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
     }
 
     private void addSdrBands(Product targetProduct) {
-        for (int i = 0; i < sensor.getToaBandNamesToCorrected().length; i++) {
-            Band srcBand = sourceProduct.getBand(sensor.getToaBandNamesToCorrected()[i]);
+        for (int i = 0; i < sensor.getToaBandNamesToBeCorrected().length; i++) {
+            Band srcBand = sourceProduct.getBand(sensor.getToaBandNamesToBeCorrected()[i]);
             Band band = targetProduct.addBand(sensor.getSdrBandNames()[i], ProductData.TYPE_FLOAT32);
             band.setNoDataValue(Float.NaN);
             band.setNoDataValueUsed(true);
@@ -181,8 +181,8 @@ public class SdrOlciSlstrOp extends PixelOperator {
     }
 
     private void addSdrErrorBands(Product targetProduct) {
-        for (int i = 0; i < sensor.getToaBandNamesToCorrected().length; i++) {
-            Band srcBand = sourceProduct.getBand(sensor.getToaBandNamesToCorrected()[i]);
+        for (int i = 0; i < sensor.getToaBandNamesToBeCorrected().length; i++) {
+            Band srcBand = sourceProduct.getBand(sensor.getToaBandNamesToBeCorrected()[i]);
             Band band = targetProduct.addBand(sensor.getSdrErrorBandNames()[i], ProductData.TYPE_FLOAT32);
             band.setNoDataValue(Float.NaN);
             band.setNoDataValueUsed(true);
@@ -190,6 +190,14 @@ public class SdrOlciSlstrOp extends PixelOperator {
         }
     }
 
+    /**
+     * Configures a stack of samples with input data bands:
+     * Position 0: "land", depends on landExpr parameter, computeSdrEverywhere (valid and not cosmetic), sensor
+     * Position 1: IDEPIX_SNOW_ICE
+     * Position 2-16: ancillary bands VZA .. WV
+     * Position 17-43: Oa01_reflectance .. Sl06_reflectance_an
+     * @param configurator
+     */
     @Override
     protected void configureSourceSamples(SourceSampleConfigurer configurator) {
         final String commonLandExpr;
@@ -248,6 +256,12 @@ public class SdrOlciSlstrOp extends PixelOperator {
         configurator.defineSample(SRC_LAND_MASK, landMaskProduct.getBandAt(0).getName(), landMaskProduct);
     }
 
+    /**
+     * Configures a stack of samples
+     * Position 0-20: sdr_Oa01 .. sdr_Sl06
+     * Position 21-41: sdr_error_Oa01 .. sdr_error_Sl06, optional, if writeSdrUncertaintyBands
+     * @param configurator
+     */
     @Override
     protected void configureTargetSamples(TargetSampleConfigurer configurator) {
         int index = 0;
@@ -268,23 +282,23 @@ public class SdrOlciSlstrOp extends PixelOperator {
         final int snowFlag = sourceSamples[SRC_SNOW_MASK].getInt();
 
         if (landFlag == 0 && snowFlag == 0) {
-            // not land and not snow
+            // not land (=valid and not cosmetic if computeSdrEverywhere) and not snow
             OlciSlstrAcUtils.fillTargetSampleWithNoDataValue(targetSamples);
             return;
         }
 
-        double vza_olci = sourceSamples[SRC_VZA_OLCI].getDouble();
-        double vaa_olci = sourceSamples[SRC_VAA_OLCI].getDouble();
-        double sza_olci = sourceSamples[SRC_SZA_OLCI].getDouble();
-        double saa_olci = sourceSamples[SRC_SAA_OLCI].getDouble();
-        double vza_slstr = sourceSamples[SRC_VZA_SLSTR].getDouble();
-        double vaa_slstr = sourceSamples[SRC_VAA_SLSTR].getDouble();
-        double sza_slstr = sourceSamples[SRC_SZA_SLSTR].getDouble();
-        double saa_slstr = sourceSamples[SRC_SAA_SLSTR].getDouble();
-        double hsf = sourceSamples[SRC_DEM_OLCI].getDouble();
-        double aot = sourceSamples[SRC_AOT].getDouble();
-        double delta_aot = sourceSamples[SRC_AOT_ERR].getDouble();
-
+        // determine ancillary and geometric data of pixel
+        final double vza_olci = sourceSamples[SRC_VZA_OLCI].getDouble();
+        final double vaa_olci = sourceSamples[SRC_VAA_OLCI].getDouble();
+        final double sza_olci = sourceSamples[SRC_SZA_OLCI].getDouble();
+        final double saa_olci = sourceSamples[SRC_SAA_OLCI].getDouble();
+        final double vza_slstr = sourceSamples[SRC_VZA_SLSTR].getDouble();
+        final double vaa_slstr = sourceSamples[SRC_VAA_SLSTR].getDouble();
+        final double sza_slstr = sourceSamples[SRC_SZA_SLSTR].getDouble();
+        final double saa_slstr = sourceSamples[SRC_SAA_SLSTR].getDouble();
+        final double hsf_meters = sourceSamples[SRC_DEM_OLCI].getDouble();
+        final double aot = sourceSamples[SRC_AOT].getDouble();
+        final double delta_aot = sourceSamples[SRC_AOT_ERR].getDouble();
 
         double phi_olci = abs(saa_olci - vaa_olci);
         if (phi_olci > 180.0) {
@@ -293,7 +307,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
         phi_olci = min(phi_olci, 179);
         phi_olci = max(phi_olci, 1);
 
-
         double phi_slstr = abs(saa_slstr - vaa_slstr);
         if (phi_slstr > 180.0) {
             phi_slstr = 360.0 - phi_slstr;
@@ -301,7 +314,7 @@ public class SdrOlciSlstrOp extends PixelOperator {
         phi_slstr = min(phi_slstr, 179);
         phi_slstr = max(phi_slstr, 1);
 
-        hsf *= 0.001; // convert m to km
+        double hsf = hsf_meters * 0.001; // convert m to km
         if (hsf <= 0.0 && hsf >= -0.45) {
             hsf = hsfMinOlci;
         }
@@ -321,17 +334,13 @@ public class SdrOlciSlstrOp extends PixelOperator {
         double ozo = 0.001 * sourceSamples[SRC_OZONE].getDouble() * 46698.0;
         double cwv = sourceSamples[SRC_Water_VAPOUR].getDouble();
 
-        double vza_olci_r = toRadians(vza_olci);
-        double sza_olci_r = toRadians(sza_olci);
-        double muv_olci = cos(vza_olci_r);
-        double mus_olci = cos(sza_olci_r);
-        double amf_olci = 1.0 / muv_olci + 1.0 / mus_olci;
+        final double muv_olci = cos(toRadians(vza_olci));
+        final double mus_olci = cos(toRadians(sza_olci));
+        final double amf_olci = 1.0 / muv_olci + 1.0 / mus_olci;
 
-        double vza_slstr_r = toRadians(vza_slstr);
-        double sza_slstr_r = toRadians(sza_slstr);
-        double muv_slstr = cos(vza_slstr_r);
-        double mus_slstr = cos(sza_slstr_r);
-        double amf_slstr = 1.0 / muv_slstr + 1.0 / mus_slstr;
+        final double muv_slstr = cos(toRadians(vza_slstr));
+        final double mus_slstr = cos(toRadians(sza_slstr));
+        final double amf_slstr = 1.0 / muv_slstr + 1.0 / mus_slstr;
 
         if (amf_olci < amfMinOlci || amf_olci > amfMaxOlci ||
                 amf_slstr < amfMinSlstr || amf_slstr > amfMaxSlstr ||
@@ -339,17 +348,6 @@ public class SdrOlciSlstrOp extends PixelOperator {
                 Double.isNaN(ozo) || Double.isNaN(cwv)) {
             OlciSlstrAcUtils.fillTargetSampleWithNoDataValue(targetSamples);
             return;
-        }
-
-        double[] toa_rfl = new double[sensor.getNumBands()];
-        for (int i = 0; i < toa_rfl.length; i++) {
-            double toaRefl = sourceSamples[SRC_TOA_RFL + i].getDouble();
-            if (toaRefl != geophysicalNoDataValues[i]) {
-                toa_rfl[i] = toaRefl / sensor.getCalCoeff()[i];
-            } else {
-                toa_rfl[i] = Double.NaN;
-
-            }
         }
 
         if (ozo <= ozoMinOlci || ozo <= ozoMinSlstr) {
@@ -366,87 +364,83 @@ public class SdrOlciSlstrOp extends PixelOperator {
             cwv = Math.min(cwvMaxOlci, cwvMaxSlstr);
         }
 
-
-        //TODO
-        double[] tg_olci = hyLutOlci.getTG(cwv, ozo, amf_olci);
-        double[] tg_slstr = hyLutSlstr.getTG(cwv, ozo, amf_slstr);
-        double[][] f_int_all_olci = hyLutOlci.getRT(aot, sza_olci, vza_olci, phi_olci, hsf);
-        double[][] f_int_all_slstr = hyLutSlstr.getRT(aot, sza_slstr, vza_slstr, phi_slstr, hsf);
-
-        int[] keyCorrectedYesNo = sensor.gettoaBandNamesToCorrectedBinaer();
+        // apply LUT to ancillary and geometric data of pixel
+        //TODO adapt to common OLCI+SLSTR LUT when available
+        final double[] tg_olci = hyLutOlci.getTG(cwv, ozo, amf_olci);
+        final double[] tg_slstr = hyLutSlstr.getTG(cwv, ozo, amf_slstr);
+        final double[][] f_int_all_olci = hyLutOlci.getRT(aot, sza_olci, vza_olci, phi_olci, hsf);
+        final double[][] f_int_all_slstr = hyLutSlstr.getRT(aot, sza_slstr, vza_slstr, phi_slstr, hsf);
 
         if (f_int_all_olci == null || f_int_all_slstr == null) {
             OlciSlstrAcUtils.fillTargetSampleWithNoDataValue(targetSamples);
             return;
         }
 
-        double[] sab = new double[sensor.getNumBands()];
-        double[] rfl_pix = new double[sensor.getNumBands()];
-        double[] deltaReflf2deltaAot = new double[sensor.getNumBands()];
-        double rpw;
-        double[] ttot = new double[sensor.getNumBands()];
-        double[] f_int = new double[5];
-        double[] tg = new double[sensor.getNumBands()];
-        double x_term;
+        // reflectance bands correction loop
         int counter = 0;
-        for (int i = 0; i < sensor.getNumBands(); i++) {
-            //TODO check
-            if (i < 21) { // OLCI
-                for (int j = 0; j < 5; j++) {
-                    f_int[j] = f_int_all_olci[j][i];
+        final int ERROR_TARGET_BAND_OFFSET = sensor.getSdrBandNames().length;
+        for (int i = 0; i < sensor.getNumBands(); ++i) {
+            // skip bands not to be corrected
+            if (! sensor.isToaBandToBeCorrected(i)) {
+                continue;
+            }
+            // check for no-data value
+            double toaRefl = sourceSamples[SRC_TOA_RFL + i].getDouble();
+            if (toaRefl == geophysicalNoDataValues[i]) {
+                targetSamples[counter].set(Double.NaN);
+                if (writeSdrUncertaintyBands) {
+                    targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(Double.NaN);
                 }
-                tg[i] = tg_olci[i];
-                rpw = f_int[0]; // * Math.PI / mus_olci; // Path Radiance
-                ttot[i] = f_int[1]; // / mus_olci;    // Total TOA flux (Isc*Tup*Tdw)
-            } else { //SLSTR
-                for (int k = 0; k < 5; k++) {
+            } else {
+                // apply calibration
+                toaRefl = toaRefl / sensor.getCalCoeff()[i];
+                // determine LUT parameters for band i
+                final double rpw;
+                final double ttot;
+                final double sab;  // Spherical Albedo
+                final double deltaReflf2deltaAot;
+                final double tg;
+                //TODO check
+                if (i < 21) { // OLCI
+                    rpw = f_int_all_olci[0][i];
+                    ttot = f_int_all_olci[1][i];
+                    sab = f_int_all_olci[2][i];  // Spherical Albedo
+                    deltaReflf2deltaAot = f_int_all_olci[3][i];
+                    tg = tg_olci[i];
+                    //rpw = f_int[0]; // * Math.PI / mus_olci; // Path Radiance
+                    //ttot[i] = f_int[1]; // / mus_olci;    // Total TOA flux (Isc*Tup*Tdw)
+                } else { //SLSTR
+                    //TODO after OLCI and SLSTR LUT delivery: remove if above, ...
+                    // ... = f_int_all_slstr[k][i];
+                    rpw = f_int_all_slstr[0][i - 21];
+                    ttot = f_int_all_slstr[1][i - 21];
+                    sab = f_int_all_slstr[2][i - 21];  // Spherical Albedo
+                    deltaReflf2deltaAot = f_int_all_slstr[3][i - 21];
                     //TODO after OLCI and SLSTR LUT delivery
-//                    f_int[j] = f_int_all_slstr[k][i];
-                    f_int[k] = f_int_all_slstr[k][i - 21];
+                    // tg = tg_slstr[i];
+                    tg = tg_slstr[i - 21];
+                    //rpw = f_int[0]; // * Math.PI / mus_slstr; // Path Radiance
+                    //ttot[i] = f_int[1]; // / mus_slstr;    // Total TOA flux (Isc*Tup*Tdw)
                 }
-                //TODO after OLCI and SLSTR LUT delivery
-//                tg[i] = tg_slstr[i];
-                tg[i] = tg_slstr[i - 21];
-                rpw = f_int[0]; // * Math.PI / mus_slstr; // Path Radiance
-                ttot[i] = f_int[1]; // / mus_slstr;    // Total TOA flux (Isc*Tup*Tdw)
-            }
+                // calculate corrected reflectance
+                toaRefl = toaRefl / tg;
+                final double x_term = (toaRefl - rpw) / ttot;
+                final double rfl_pix = x_term / (1. + sab * x_term);  //calculation of SDR
 
-            deltaReflf2deltaAot[i] = f_int[3];
-            sab[i] = f_int[2];        // Spherical Albedo
+                targetSamples[counter].set(rfl_pix);
 
-            toa_rfl[i] = toa_rfl[i] / tg[i];
+                // calculate uncertainty
+                if (writeSdrUncertaintyBands) {
+                    final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
+                    final double err_RTM = sensor.getRtmError();
+                    final double err_aod = deltaReflf2deltaAot * delta_aot;
+                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
 
-            x_term = (toa_rfl[i] - rpw) / ttot[i];
-            rfl_pix[i] = x_term / (1. + sab[i] * x_term); //calculation of SDR
-
-            if (keyCorrectedYesNo[i] == 1) {
-                targetSamples[counter].set(rfl_pix[i]);
-                counter++;
-            }
-        }
-
-        // compute and write uncertainties only on demand
-        if (writeSdrUncertaintyBands) {
-            double[] err_rad = new double[sensor.getNumBands()];
-            double[] err_RTM = new double[sensor.getNumBands()];
-            double[] err_all = new double[sensor.getNumBands()];
-            double[] err_aod = new double[sensor.getNumBands()];
-
-            for (int i = 0; i < sensor.getNumBands(); i++) {
-                //TODO check getRadiometricError == relative error
-                err_rad[i] = sensor.getRadiometricError() * toa_rfl[i] / ttot[i];
-                err_RTM[i] = sensor.getRtmError();
-                err_aod[i] = deltaReflf2deltaAot[i] * delta_aot;
-                err_all[i] = Math.pow((err_rad[i] * err_rad[i] + err_RTM[i] * err_RTM[i] + err_aod[i] * err_aod[i]), 0.5);
-            }
-
-
-            for (int i = 0; i < sensor.getNumBands(); i++) {
-                if (keyCorrectedYesNo[i] == 1) {
-                    targetSamples[counter].set(err_all[i]);
-                    counter++;
+                    targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(err_all);
                 }
             }
+            // increase target cursor
+            counter++;
         }
     }
 
