@@ -19,20 +19,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.esa.s3tbx</groupId>
-        <artifactId>s3tbx</artifactId>
-        <version>9.0.0-SNAPSHOT</version>
-    </parent>
+<!--    <parent>-->
+<!--        <groupId>org.esa.s3tbx</groupId>-->
+<!--        <artifactId>s3tbx-c3solcislstr-ac</artifactId>-->
+<!--        <version>13.0.0</version>-->
+<!--    </parent>-->
 
+    <groupId>org.esa.s3tbx</groupId>
     <artifactId>s3tbx-c3solcislstr-ac</artifactId>
+    <version>13.0.0</version>
+
     <name>S3TBX C3S OLCI/SLSTR Atmospheric Correction</name>
     <packaging>nbm</packaging>
     <description>Performs atmospheric correction for OLCI/SLSTR (heritage from MERIS as used in GlobAlbedo and CCI LC).</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <snap.version>9.0.0</snap.version>
+        <snap.version>13.0.0</snap.version>
+        <opttbx.version>13.0.0</opttbx.version>
         <javahelp.version>2.0.05</javahelp.version>
     </properties>
 
@@ -64,12 +68,17 @@
         </dependency>
         <dependency>
             <groupId>org.esa.snap</groupId>
+            <artifactId>snap-core</artifactId>
+            <version>${snap.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.esa.snap</groupId>
             <artifactId>snap-runtime</artifactId>
             <version>${snap.version}</version>
         </dependency>
         <dependency>
             <groupId>org.esa.snap</groupId>
-            <artifactId>snap-core</artifactId>
+            <artifactId>snap-netcdf</artifactId>
             <version>${snap.version}</version>
         </dependency>
         <dependency>
@@ -99,21 +108,21 @@
         </dependency>
 
         <dependency>
-            <groupId>org.esa.s3tbx</groupId>
-            <artifactId>s3tbx-olci-radiometry</artifactId>
-            <version>${snap.version}</version>
+            <groupId>eu.esa.opt</groupId>
+            <artifactId>opttbx-olci-preprocessing</artifactId>
+            <version>${opttbx.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.esa.s3tbx</groupId>
-            <artifactId>s3tbx-rad2refl</artifactId>
-            <version>${snap.version}</version>
+            <groupId>eu.esa.opt</groupId>
+            <artifactId>opttbx-rad2refl</artifactId>
+            <version>${opttbx.version}</version>
         </dependency>
         
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
         </dependency>
 
         <dependency>
@@ -123,24 +132,24 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.googlecode.json-simple</groupId>-->
+<!--            <artifactId>json-simple</artifactId>-->
+<!--            <version>1.1.1</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.google.guava</groupId>-->
+<!--            <artifactId>guava</artifactId>-->
+<!--            <version>18.0</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>edu.ucar</groupId>
-            <artifactId>cdm-core</artifactId>
-            <version>5.3.3</version>
-            <scope>compile</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>edu.ucar</groupId>-->
+<!--            <artifactId>cdm-core</artifactId>-->
+<!--            <version>5.3.3</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
     </dependencies>
 
     <build>
@@ -172,30 +181,74 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <useDefaultManifestFile>true</useDefaultManifestFile>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.11.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.netbeans.utilities</groupId>
+                <artifactId>nbm-maven-plugin</artifactId>
+                <version>14.0</version>
+                <extensions>true</extensions>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.help</groupId>
+                        <artifactId>javahelp</artifactId>
+                        <version>${javahelp.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <licenseName>GPL 3</licenseName>
+                    <licenseFile>${project.basedir}/../LICENSE.txt</licenseFile>
+                    <requiresRestart>true</requiresRestart>
+                    <cluster>idepix</cluster>
+                    <brandingToken>idepix</brandingToken>
+                    <requiresRestart>true</requiresRestart>
+                    <keystore>${project.basedir}/../keystore/snap.ks</keystore>
+                    <keystorealias>snap</keystorealias>
+                    <keystorepassword>snap-123</keystorepassword>
+                    <publicPackages>
+                        <publicPackage>org.esa.snap.idepix.*</publicPackage>
+                    </publicPackages>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>3.2.5</version>
                 <configuration>
-                    <enableAssertions>true</enableAssertions>
+                    <enableAssertions>false</enableAssertions>
                     <!--<skip>true</skip>-->
                     <printSummary>true</printSummary>
                     <useFile>false</useFile>
                     <argLine>-Xmx1024M -Dfile.encoding=UTF-8</argLine>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.7.1</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.0.0</version>
             </plugin>
 
         </plugins>
