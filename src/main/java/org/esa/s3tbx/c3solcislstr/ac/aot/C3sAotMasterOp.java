@@ -1,6 +1,6 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
-import org.esa.s3tbx.c3solcislstr.ac.Sensor;
+import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -28,15 +28,15 @@ import java.util.Map;
  *
  * @author A. Heckel (USwansea), O. Danne
  */
-@OperatorMetadata(alias = "AotMaster", version = "0.8",
+@OperatorMetadata(alias = "C3sAotMaster", version = "0.8",
         authors = "A. Heckel (USwansea), O. Danne",
         internal = true,
         copyright = "Copyright (C) 2010, 2018 by USwansea, Brockmann Consult",
         description = "Master operator for AOT retrieval. Parent of sensor specific operators (here i.e. OLCI, MERIS).")
-public class AotMasterOp extends Operator {
+public class C3sAotMasterOp extends Operator {
 
     @Parameter(defaultValue = "OLCI_SLSTR_NOMINAL")
-    private Sensor sensor;
+    private S3OlciSlstrSensor sensor;
 
     @Parameter(defaultValue = "false")
     private boolean copyToaReflBands;
@@ -102,8 +102,8 @@ public class AotMasterOp extends Operator {
         RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
 
         Product reflProduct;
-        if (sensor == Sensor.OLCI_SLSTR_NOMINAL || sensor == Sensor.OLCI_SLSTR_S3A || sensor == Sensor.OLCI_SLSTR_S3B) {
-            AotOlciSlstrOp aotOlciSlstrOp = new AotOlciSlstrOp();
+        if (sensor == S3OlciSlstrSensor.OLCI_SLSTR_NOMINAL || sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3A || sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3B) {
+            C3sAotOlciSlstrOp aotOlciSlstrOp = new C3sAotOlciSlstrOp();
             aotOlciSlstrOp.setSourceProduct(sourceProduct);
             aotOlciSlstrOp.setParameterDefaultValues();
             reflProduct = aotOlciSlstrOp.getTargetProduct();
@@ -135,7 +135,7 @@ public class AotMasterOp extends Operator {
             return;
         }
 
-        AotLowresOp aotLowresOp = new AotLowresOp();
+        C3sAotLowresOp aotLowresOp = new C3sAotLowresOp();
         aotLowresOp.setSourceProduct(reflProduct);
         aotLowresOp.setParameterDefaultValues();
         aotLowresOp.setParameter("sensor", sensor);
@@ -151,7 +151,7 @@ public class AotMasterOp extends Operator {
             Map<String, Product> fillSourceProds = new HashMap<>(2);
             fillSourceProds.put("aotProduct", aotDownsclProduct);
             // fill of AOT gaps on low-resolution grid:
-            fillAotProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(GapFillingOp.class), GPF.NO_PARAMS, fillSourceProds);
+            fillAotProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sGapFillingOp.class), GPF.NO_PARAMS, fillSourceProds);
         }
 
         targetProduct = fillAotProduct;
@@ -160,10 +160,11 @@ public class AotMasterOp extends Operator {
             upsclProducts.put("lowresProduct", fillAotProduct);
             upsclProducts.put("hiresProduct", reflProduct);
             Map<String, Object> sclParams = new HashMap<>(1);
-            sclParams.put("sensor", sensor);
+//            sclParams.put("sensor", sensor);
+            sclParams.put("sensor", S3OlciSlstrSensor.OLCI_SLSTR_S3B);
             sclParams.put("scale", scale);
             sclParams.put("computeAotEverywhere", computeAotEverywhere);
-            Product aotHiresProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(AotHighresOp.class), sclParams, upsclProducts, rhTarget);
+            Product aotHiresProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotHighresOp.class), sclParams, upsclProducts, rhTarget);
 
             targetProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
             ProductUtils.copyPreferredTileSize(reflProduct, targetProduct);
@@ -230,7 +231,7 @@ public class AotMasterOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(AotMasterOp.class);
+            super(C3sAotMasterOp.class);
         }
     }
 

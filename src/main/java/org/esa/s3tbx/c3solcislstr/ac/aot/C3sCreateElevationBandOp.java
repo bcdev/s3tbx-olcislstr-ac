@@ -40,13 +40,13 @@ import java.awt.Rectangle;
  * Operator that creates the one and only elevation band
  * based on sourceProduct and BEAM GETASSE30
  */
-@OperatorMetadata(alias = "AerosolRetrieval.CreateElevationBand",
+@OperatorMetadata(alias = "AerosolRetrieval.C3sCreateElevationBand",
         description = "creates a single band with elevation from getasse",
         authors = "A.Heckel, Olaf Danne, Marco Zuehlke",
         version = "1.0",
         internal = true,
         copyright = "(C) 2010, 2016 by University Swansea (a.heckel@swansea.ac.uk) and Brockmann Consult")
-public class CreateElevationBandOp extends Operator {
+public class C3sCreateElevationBandOp extends Operator {
 
     @SourceProduct
     private Product sourceProduct;
@@ -62,7 +62,7 @@ public class CreateElevationBandOp extends Operator {
      * Default constructor. The graph processing framework
      * requires that an operator has a default constructor.
      */
-    public CreateElevationBandOp() {
+    public C3sCreateElevationBandOp() {
     }
 
     @Override
@@ -148,7 +148,7 @@ public class CreateElevationBandOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(CreateElevationBandOp.class);
+            super(C3sCreateElevationBandOp.class);
         }
     }
 }

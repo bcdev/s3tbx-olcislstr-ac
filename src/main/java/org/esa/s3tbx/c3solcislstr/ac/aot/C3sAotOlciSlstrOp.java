@@ -24,12 +24,12 @@ import java.util.Map;
  *
  * @author A. Heckel (USwansea), O. Danne
  */
-@OperatorMetadata(alias = "AotOlciSlstsr", version = "0.8",
+@OperatorMetadata(alias = "C3sAotOlciSlstsr", version = "0.8",
         authors = "A. Heckel (USwansea), O. Danne",
         internal = true,
         copyright = "Copyright (C) 2010, 2018 by USwansea, Brockmann Consult",
         description = "Operator for OLCI/SLSTR AOT retrieval.")
-public class AotOlciSlstrOp extends Operator {
+public class C3sAotOlciSlstrOp extends Operator {
 
     @Parameter(defaultValue = "false", description = "Compute a cloud shadow")
     private boolean computeCloudShadow;
@@ -61,7 +61,7 @@ public class AotOlciSlstrOp extends Operator {
                 szaRegion.height == sourceProduct.getSceneRasterHeight()) {
             szaSubProduct = sourceProduct;
         } else if (szaRegion.width < 2 || szaRegion.height < 2) {
-            targetProduct = AotMasterOp.EMPTY_PRODUCT;
+            targetProduct = C3sAotMasterOp.EMPTY_PRODUCT;
             return;
         } else {
 // TODO we cannot subset here because SdrOlciSlstrOp expects two inputs of same extent, the main input and this aot output
@@ -96,7 +96,7 @@ public class AotOlciSlstrOp extends Operator {
         // create elevation product if band is missing in sourceProduct
         Product elevProduct = null;
         if (needElevation && !szaSubProduct.containsBand(ALTITUDE_BAND_NAME)) {
-            elevProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(CreateElevationBandOp.class), GPF.NO_PARAMS, szaSubProduct);
+            elevProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sCreateElevationBandOp.class), GPF.NO_PARAMS, szaSubProduct);
         }
 
         // create surface pressure estimate product if band is missing in sourceProduct
@@ -171,7 +171,7 @@ public class AotOlciSlstrOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(AotOlciSlstrOp.class);
+            super(C3sAotOlciSlstrOp.class);
         }
     }
 }

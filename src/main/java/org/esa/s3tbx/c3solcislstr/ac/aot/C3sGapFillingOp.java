@@ -43,13 +43,13 @@ import java.util.Map;
 /**
  * @author akheckel
  */
-@OperatorMetadata(alias = "AerosolRetrieval.GapFilling",
+@OperatorMetadata(alias = "AerosolRetrieval.C3sGapFilling",
         description = "Fills Gaps in Grid",
         authors = "Andreas Heckel, Olaf Danne, Marco Zuehlke",
         version = "1.0",
         internal = true,
         copyright = "(C) 2010, 2016 by University Swansea (a.heckel@swansea.ac.uk) and Brockmann Consult")
-public class GapFillingOp extends Operator {
+public class C3sGapFillingOp extends Operator {
 
     private static final int F_INTERP = 1;
     private static final int F_CLIM = 0;
@@ -188,7 +188,7 @@ public class GapFillingOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(GapFillingOp.class);
+            super(C3sGapFillingOp.class);
         }
     }
 }

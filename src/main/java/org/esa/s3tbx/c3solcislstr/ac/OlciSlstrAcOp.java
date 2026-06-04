@@ -1,7 +1,7 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
 import org.esa.s3tbx.c3solcislstr.ac.aot.AotConsts;
-import org.esa.s3tbx.c3solcislstr.ac.aot.AotMasterOp;
+import org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.RasterDataNode;
 import org.esa.snap.core.gpf.Operator;
@@ -64,16 +64,16 @@ public class OlciSlstrAcOp extends Operator {
             label = "C3S SYN OLCI SLSTR L1b product")
     private Product sourceProduct;
 
-    private Sensor sensor;
+    private S3OlciSlstrSensor sensor;
 
     @Override
     public void initialize() throws OperatorException {
         sensor = determineSensor(sourceProduct);
         Product aotProduct;
         aotProduct = processAot(sourceProduct);
-        if (aotProduct == AotMasterOp.EMPTY_PRODUCT) {
+        if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
             Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
-            setTargetProduct(AotMasterOp.EMPTY_PRODUCT);
+            setTargetProduct(C3sAotMasterOp.EMPTY_PRODUCT);
             return;
         }
 
@@ -115,12 +115,12 @@ public class OlciSlstrAcOp extends Operator {
     }
 
 
-    private Sensor determineSensor(Product l1bProduct) {
+    private S3OlciSlstrSensor determineSensor(Product l1bProduct) {
         if (l1bProduct.getName().contains("SY_1_")) {
             if (l1bProduct.getName().startsWith("S3A_SY_1_SYN")) {
-                return Sensor.OLCI_SLSTR_S3A;
+                return S3OlciSlstrSensor.OLCI_SLSTR_S3A;
             } else {
-                return Sensor.OLCI_SLSTR_S3B;
+                return S3OlciSlstrSensor.OLCI_SLSTR_S3B;
             }
         } else {
             throw new OperatorException(String.format("Product of type '%s' not supported.",
@@ -129,7 +129,7 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     private Product processAot(Product productSourceAot) {
-        AotMasterOp aotMasterOp = new AotMasterOp();
+        C3sAotMasterOp aotMasterOp = new C3sAotMasterOp();
         aotMasterOp.setParameterDefaultValues();
         aotMasterOp.setParameter("sensor", sensor);
         aotMasterOp.setParameter("useConstantAot", false);
@@ -142,11 +142,11 @@ public class OlciSlstrAcOp extends Operator {
 
 
     private Product processSdr(Product sourceProduct, Product aotProduct) {
-        SdrOlciSlstrOp sdrOp;
+        C3sSdrOlciSlstrOp sdrOp;
         switch (sensor) {
             case OLCI_SLSTR_S3A:
             case OLCI_SLSTR_S3B:
-                sdrOp = new SdrOlciSlstrOp();
+                sdrOp = new C3sSdrOlciSlstrOp();
                 break;
             default:
                 throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");

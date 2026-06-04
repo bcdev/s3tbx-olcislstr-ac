@@ -21,7 +21,7 @@ import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
 /**
  * Encapsulates the differences between the different sensors
  */
-public enum Sensor {
+public enum S3OlciSlstrSensor {
 
     // todo: define all numbers as constants
 
@@ -118,15 +118,15 @@ public enum Sensor {
     private final String landExpr;
 
 
-    Sensor(String name, int numBands, int numBandsAotCorr, double radiometricError,
-           double rtmError, float[] calCoeff,
-           String[] toaBandNames, String[] toaBandNamesToBeCorrected, boolean[] toaBandIsToBeCorrected,
-           String[] toaBandNamesMerisHeritage,
-           String[] ancillaryBandNames, String[] sdrBandBandNames, String[] sdrErrorBandNames,
-           String[] geomBandNamesOlci, String[] geomBandNamesSlstrNadir,
-           String ozoneBandNames, String surfPressBandName, String wvBandName, String ndviBandName, String ndviExpr,
-           String nirName, String validExpr, String aotOutExpr, double[] specWeights,
-           String landExpr) {
+    S3OlciSlstrSensor(String name, int numBands, int numBandsAotCorr, double radiometricError,
+                      double rtmError, float[] calCoeff,
+                      String[] toaBandNames, String[] toaBandNamesToBeCorrected, boolean[] toaBandIsToBeCorrected,
+                      String[] toaBandNamesMerisHeritage,
+                      String[] ancillaryBandNames, String[] sdrBandBandNames, String[] sdrErrorBandNames,
+                      String[] geomBandNamesOlci, String[] geomBandNamesSlstrNadir,
+                      String ozoneBandNames, String surfPressBandName, String wvBandName, String ndviBandName, String ndviExpr,
+                      String nirName, String validExpr, String aotOutExpr, double[] specWeights,
+                      String landExpr) {
 
         this.name = name;
         this.numBands = numBands;

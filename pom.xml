@@ -205,8 +205,8 @@
                     <licenseName>GPL 3</licenseName>
                     <licenseFile>${project.basedir}/../LICENSE.txt</licenseFile>
                     <requiresRestart>true</requiresRestart>
-                    <cluster>idepix</cluster>
-                    <brandingToken>idepix</brandingToken>
+                    <cluster>olcislstr-ac</cluster>
+                    <brandingToken>olcislstr-ac</brandingToken>
                     <requiresRestart>true</requiresRestart>
                     <keystore>${project.basedir}/../keystore/snap.ks</keystore>
                     <keystorealias>snap</keystorealias>

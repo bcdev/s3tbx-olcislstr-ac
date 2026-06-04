@@ -2,7 +2,7 @@ package org.esa.s3tbx.c3solcislstr.ac.aot;
 
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcUtils;
-import org.esa.s3tbx.c3solcislstr.ac.Sensor;
+import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.MerisLuts;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.MomoLut;
 import org.esa.s3tbx.c3solcislstr.ac.aot.math.BrentFitFunction;
@@ -46,15 +46,15 @@ import java.util.logging.Logger;
  *
  * @author A. Heckel (USwansea), O. Danne
  */
-@OperatorMetadata(alias = "AotLowres", version = "0.8",
+@OperatorMetadata(alias = "C3sAotLowres", version = "0.8",
         authors = "A. Heckel (USwansea), O. Danne",
         internal = true,
         copyright = "Copyright (C) 2010, 2018 by USwansea, Brockmann Consult",
         description = "Operator for AOT retrieval on low-resolution grid.")
-public class AotLowresOp extends Operator {
+public class C3sAotLowresOp extends Operator {
 
     @Parameter(defaultValue = "OLCI_SLSTR_NOMINAL")
-    private Sensor sensor;
+    private S3OlciSlstrSensor sensor;
 
     @Parameter(defaultValue = "2")
     private int vegSpecId;
@@ -583,7 +583,7 @@ public class AotLowresOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(AotLowresOp.class);
+            super(C3sAotLowresOp.class);
         }
     }
 }

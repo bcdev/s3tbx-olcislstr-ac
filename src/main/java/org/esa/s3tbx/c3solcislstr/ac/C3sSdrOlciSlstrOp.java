@@ -26,12 +26,12 @@ import java.io.IOException;
 import static java.lang.Math.*;
 import static java.lang.StrictMath.toRadians;
 
-@OperatorMetadata(alias = "Sdr.OlciSlstr", version = "0.8",
+@OperatorMetadata(alias = "Sdr.C3sOlciSlstr", version = "0.8",
         authors = "G. Kirches, O.Danne, M.Peters",
         internal = true,
         copyright = "Copyright (C) 2022 by Brockmann Consult",
         description = "C3SLot5 Operator for OLCI SLSTR SDR retrieval")
-public class SdrOlciSlstrOp extends PixelOperator {
+public class C3sSdrOlciSlstrOp extends PixelOperator {
 
     @SourceProduct
     private Product sourceProduct;
@@ -43,7 +43,7 @@ public class SdrOlciSlstrOp extends PixelOperator {
     private Product reflectanceProduct = null;
 
     @Parameter(description = "Sensor")
-    protected Sensor sensor;
+    protected S3OlciSlstrSensor sensor;
 
     @Parameter(defaultValue = "false",
             description = "If set, SDR uncertainty bands will be written into SDR product")
@@ -491,7 +491,7 @@ public class SdrOlciSlstrOp extends PixelOperator {
     public static class Spi extends OperatorSpi {
 
         public Spi() {
-            super(SdrOlciSlstrOp.class);
+            super(C3sSdrOlciSlstrOp.class);
         }
     }
 

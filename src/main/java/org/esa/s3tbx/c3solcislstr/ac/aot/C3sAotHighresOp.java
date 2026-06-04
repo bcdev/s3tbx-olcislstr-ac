@@ -8,7 +8,7 @@ package org.esa.s3tbx.c3solcislstr.ac.aot;
 import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcUtils;
-import org.esa.s3tbx.c3solcislstr.ac.Sensor;
+import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.FlagCoding;
 import org.esa.snap.core.datamodel.Mask;
@@ -34,15 +34,15 @@ import java.awt.Rectangle;
  *
  * @author A. Heckel (USwansea), O. Danne
  */
-@OperatorMetadata(alias = "AotHighres", version = "0.8",
+@OperatorMetadata(alias = "C3sAotHighres", version = "0.8",
         authors = "A. Heckel (USwansea), O. Danne",
         internal = true,
         copyright = "Copyright (C) 2010, 2018 by USwansea, Brockmann Consult",
         description = "Operator for final AOT retrieval on original high-resolution grid.")
-public class AotHighresOp extends Operator {
+public class C3sAotHighresOp extends Operator {
 
     @Parameter(defaultValue = "OLCI_SLSTR_NOMINAL")
-    private Sensor sensor;
+    private S3OlciSlstrSensor sensor;
 
     @Parameter(defaultValue = "false", label = " If set, AOT are computed everywhere (brute force, ignores clouds etc.)")
     private boolean computeAotEverywhere;
@@ -296,7 +296,7 @@ public class AotHighresOp extends Operator {
      */
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(AotHighresOp.class);
+            super(C3sAotHighresOp.class);
         }
     }
 }
