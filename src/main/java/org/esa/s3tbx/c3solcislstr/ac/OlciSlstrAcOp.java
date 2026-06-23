@@ -2,8 +2,16 @@ package org.esa.s3tbx.c3solcislstr.ac;
 
 import org.esa.s3tbx.c3solcislstr.ac.aot.AotConsts;
 import org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp;
+import org.esa.s3tbx.c3solcislstr.mc.Multivariate;
+import org.esa.s3tbx.c3solcislstr.mc.generators.LatinHypercube;
+import org.esa.s3tbx.c3solcislstr.mc.generators.Melg;
+import org.esa.s3tbx.c3solcislstr.mc.generators.Pcg;
+import org.esa.s3tbx.c3solcislstr.mc.generators.Sobol;
+import org.esa.s3tbx.c3solcislstr.mc.operators.RadianceMutationOp;
+import org.esa.s3tbx.c3solcislstr.mc.variates.BoxMullerNormalVariate;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.RasterDataNode;
+import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -11,8 +19,11 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.util.ProductUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
@@ -60,14 +71,59 @@ public class OlciSlstrAcOp extends Operator {
     private String pathToAtmosphericParameterLuts;
 
 
+    @Parameter(label = "Seed number",
+            description = "A numeric value to seed the random number generator",
+            defaultValue = "42")
+    private long seed;
+
+    @Parameter(label = "Selector",
+            description = "A numeric value to select the random stream. If zero, no randomization is performed at all.",
+            defaultValue = "0")
+    private long selector;
+
+    @Parameter(label = "Sampling type",
+            description = "The sampling type.",
+            defaultValue = "Sobol", valueSet = {"Latin hypercube", "Random", "Sobol"})
+    private String samplingType;
+
+    @Parameter(label = "Simulation count",
+            description = "The number of simulations (only used for Latin hypercube sampling).",
+            defaultValue = "10")
+    private int simulationCount;
+
+    @Parameter(label = "Use constant radiance bias",
+            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
+            defaultValue = "true")
+    private boolean radUseConstantBias;
+
+    @Parameter(label = "Use constant CAMS bias",
+            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
+            defaultValue = "true")
+    private boolean camsUseConstantBias;
+
+
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
             label = "C3S SYN OLCI SLSTR L1b product")
     private Product sourceProduct;
+
+    private Pcg pcg;
+    private double radBias;
+    private double camsBias;
+    @SuppressWarnings("FieldCanBeLocal")
+    private Multivariate mv;
 
     private S3OlciSlstrSensor sensor;
 
     @Override
     public void initialize() throws OperatorException {
+
+        // TODO implement stepwise:
+        // 1. compute target product with SDR mutants (OLCI only)
+        // 2. compute target product with SDR mutants (OLCI + SLSTR)
+        // 3. compute target product with SDR mutants and AOT mutant
+        // 4. compute target product with SDR mutants, AOT mutant, and radiance mutants (OLCI only)
+        // 5. compute target product with SDR mutants, AOT mutant, and radiance mutants (OLCI + SLSTR)
+
         sensor = determineSensor(sourceProduct);
         Product aotProduct;
         aotProduct = processAot(sourceProduct);
@@ -82,6 +138,23 @@ public class OlciSlstrAcOp extends Operator {
         } else {
             setTargetProduct(processSdr(sourceProduct, aotProduct));
         }
+
+        ////////// begin generation of SDR mutant //////////
+        pcg = new Pcg(seed, selector);
+        mv = multivariate(samplingType);
+
+        if (radUseConstantBias) {
+            radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+        }
+
+        if (camsUseConstantBias) {
+            camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
+        }
+
+        if (isMutant()) {
+            setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
+        }
+        ////////// end generation of SDR mutant //////////
 
         if (copyAotBands && !aotOnly) {
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
@@ -179,6 +252,42 @@ public class OlciSlstrAcOp extends Operator {
         }
 
         return sdrOp.getTargetProduct();
+    }
+
+    private Multivariate multivariate(String samplingType) {
+        switch (samplingType) {
+            case "Latin hypercube":
+                return new LatinHypercube(6, simulationCount, selector, new Melg(seed));
+            case "Sobol":
+                return new Sobol(6).start(6 + selector + seed);
+            default:
+                return pcg;
+        }
+    }
+
+    private boolean isMutant() {
+        return selector != 0;
+    }
+
+    private Product mutateSurfaceReflectance(Product product) {
+        return GPF.createProduct(getName(RadianceMutationOp.class), surfaceReflectanceMutationParameterMap(), product);
+    }
+
+    private static String getName(Class<? extends Operator> operatorClass) {
+        return OperatorSpi.getOperatorAlias(operatorClass);  // returns an alias or simple class name
+    }
+
+    @NotNull
+    private Map<String, Object> surfaceReflectanceMutationParameterMap() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("rngType", MELG);
+        map.put("seedNumber", pcg.nextLong());
+        map.put("seedString", DATE_AND_TIME_OF_SOURCE);
+        map.put("positiveDefinite", true);
+        map.put("useUncertaintyModel", true);
+        map.put("uncertaintyModelType", "Relative");
+        map.put("measurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
+        return map;
     }
 
 

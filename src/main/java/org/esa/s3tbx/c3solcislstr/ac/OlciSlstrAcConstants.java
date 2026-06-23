@@ -141,6 +141,19 @@ public class OlciSlstrAcConstants {
             "sdr_error_Oa21",
             "sdr_error_Sl01", "sdr_error_Sl02", "sdr_error_Sl03",
             "sdr_error_Sl05", "sdr_error_Sl06"};
+
+    final static String[] OLCI_UNC_BAND_NAMES = new String[]{
+            "Oa01_radiance_unc", "Oa02_radiance_unc", "Oa03_radiance_unc", "Oa04_radiance_unc", "Oa05_radiance_unc", "Oa06_radiance_unc",
+            "Oa07_radiance_unc", "Oa08_radiance_unc", "Oa09_radiance_unc", "Oa10_radiance_unc", "Oa11_radiance_unc", "Oa12_radiance_unc",
+            "Oa13_radiance_unc", "Oa14_radiance_unc", "Oa15_radiance_unc", "Oa16_radiance_unc", "Oa17_radiance_unc", "Oa18_radiance_unc",
+            "Oa19_radiance_unc", "Oa20_radiance_unc", "Oa21_radiance_unc"
+    };
+
+    final static String DATE_AND_TIME_OF_PARENT = "";
+    final static String DATE_AND_TIME_OF_SOURCE = "";
+    final static boolean DO_NOT_RENAME = false;
+    final static String MELG = "MELG";
+
     public final static String idepixFlagBandName = "pixel_classif_flags";
 
     //    OLCI_SPEC_WEIGHTS,
