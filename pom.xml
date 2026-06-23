@@ -118,11 +118,31 @@
             <artifactId>opttbx-rad2refl</artifactId>
             <version>${opttbx.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.esa.snap</groupId>
+            <artifactId>idepix-core</artifactId>
+            <version>${snap.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.esa.snap</groupId>
+            <artifactId>idepix-olci</artifactId>
+            <version>${snap.version}</version>
+        </dependency>
         
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.1</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.jetbrains/annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
