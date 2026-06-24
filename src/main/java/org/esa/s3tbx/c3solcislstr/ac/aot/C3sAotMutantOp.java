@@ -1,6 +1,7 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
 import com.bc.ceres.core.ProgressMonitor;
+import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.mc.NormalVariate;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModelFactory;
@@ -16,13 +17,20 @@ import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.Tile;
+import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
+import java.awt.*;
 import java.nio.charset.StandardCharsets;
 
+@OperatorMetadata(alias = "C3sAotMutant", version = "0.8",
+        authors = "O. Danne",
+        internal = true,
+        copyright = "Copyright (C) 2026 by Brockmann Consult",
+        description = "Operator for Monte Carlo mutations of AOT retrievals.")
 public class C3sAotMutantOp extends Operator {
 
     // MC related parameters...
@@ -103,22 +111,30 @@ public class C3sAotMutantOp extends Operator {
     private UncertaintyModel uncertaintyModel;
     private Cube random;
 
-
+    private Band aotSourceBand;
 
     @Override
     public void initialize() throws OperatorException {
+        aotSourceBand = sourceProduct.getBand(OlciSlstrAcConstants.AOT_BAND_NAME);
         final int w = sourceProduct.getSceneRasterWidth();
         final int h = sourceProduct.getSceneRasterHeight();
         targetProduct = new Product(sourceProduct.getName(), sourceProduct.getProductType(), w, h);
         ProductUtils.copyMetadata(sourceProduct, targetProduct);
         targetProduct.setStartTime(sourceProduct.getStartTime());
         targetProduct.setEndTime(sourceProduct.getEndTime());
-        for (final Band sourceBand : sourceProduct.getBands()) {
-            final Band targetBand = targetProduct.addBand(sourceBand.getName(), ProductData.TYPE_FLOAT32);
-            targetBand.setDescription(sourceBand.getDescription());
-            targetBand.setUnit(sourceBand.getUnit());
-        }
+
+        final Band aotBand = targetProduct.addBand(OlciSlstrAcConstants.AOT_BAND_NAME, ProductData.TYPE_FLOAT32);
+        aotBand.setDescription(aotSourceBand.getDescription());
+        aotBand.setUnit(aotSourceBand.getUnit());
+
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);
+
+        try {
+            initializeRandomNumbers();
+        } catch (Exception e) {
+            throw new OperatorException("Random noise could not be initialized.", e);
+        }
+        initializeUncertaintyModel();
     }
 
     private void initializeRandomNumbers() {
@@ -157,21 +173,52 @@ public class C3sAotMutantOp extends Operator {
         uncertaintyModel = new UncertaintyModelFactory(uncertaintyModelType).newUncertaintyModel();
     }
 
-    @Override
-    public void doExecute(ProgressMonitor pm) throws OperatorException {
-        if (mutant) {
-            try {
-                initializeRandomNumbers();
-            } catch (Exception e) {
-                throw new OperatorException("Random noise could not be initialized.", e);
-            }
-            initializeUncertaintyModel();
-        }
+    private double correctedValue(double x) {
+        return regressionCoefficient * x + regressionConstant;
     }
+
+    private double getMutatedValue(double x, double u, double z) {
+        if (positiveDefinite) {
+            return getMutatedValueLognormal(Math.max(x, tiny), u, z);
+        }
+        return getMutatedValueNormal(x, u, z);
+    }
+
+    private static double getMutatedValueLognormal(double x, double u, double z) {
+        final double v = Math.log(1.0 + square(u / x));
+        final double e = Math.log(x) - 0.5 * v;
+        return Math.exp(getMutatedValueNormal(e, Math.sqrt(v), z));
+    }
+
+    private static double getMutatedValueNormal(double x, double u, double z) {
+        return x + u * z;
+    }
+
+    private static double square(double x) {
+        return x == 0.0 ? 0.0 : x * x;
+    }
+
 
     @Override
     public void computeTile(Band targetBand, Tile targetTile, ProgressMonitor pm) throws OperatorException {
-        super.computeTile(targetBand, targetTile, pm);
+        Rectangle targetRectangle = targetTile.getRectangle();
+
+        final Tile aotSourceTile = getSourceTile(aotSourceBand, targetRectangle);
+
+        for (int y = targetRectangle.y; y < targetRectangle.y + targetRectangle.height; y++) {
+            for (int x = targetRectangle.x; x < targetRectangle.x + targetRectangle.width; x++) {
+
+                final double parentValue = aotSourceTile.getSampleDouble(x, y);
+                // mutate total aerosol optical depth value
+                final double u = uncertaintyModel.getUncertainty(parentValue);
+                final double z = random.get(x, y, 0);
+                double targetValue = getMutatedValue(correctedValue(parentValue), u, z);
+                // mutate (i.e. scale) specific aerosol optical depth values correspondingly
+                final double aotMutant = parentValue * (targetValue / parentValue);
+                // set mutated aerosol optical depth values
+                targetTile.setSample(x, y, aotMutant);
+            }
+        }
     }
 
     /**

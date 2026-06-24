@@ -1,5 +1,6 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
+import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
@@ -14,12 +15,12 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.image.ImageManager;
 import org.esa.snap.core.util.ProductUtils;
+import org.jspecify.annotations.NonNull;
 
 import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedOp;
-import java.awt.Dimension;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,7 +83,8 @@ public class C3sAotMasterOp extends Operator {
             label = "Copy cloud top pressure")
     private boolean gaCopyCTP;
 
-    @Parameter(defaultValue = "false", label = " If set, AOT are computed everywhere (brute force, ignores clouds etc.)")
+    @Parameter(defaultValue = "false", label = " If set, AOT are computed everywhere " +
+            "(brute force, ignores clouds etc.)")
     private boolean computeAotEverywhere;
 
 
@@ -103,7 +105,9 @@ public class C3sAotMasterOp extends Operator {
     private long seedNumber;
 
     @Parameter(label = "Seed string",
-            description = "An alphanumeric value to seed the random number generator (US-ASCII character set). If empty, the seed value is determined by the date and time associated with the CAMS parent product.")
+            description = "An alphanumeric value to seed the random number generator " +
+                    "(US-ASCII character set). If empty, the seed value is determined " +
+                    "by the date and time associated with the CAMS parent product.")
     private String seedString;
 
     @Parameter(label = "Positive definite",
@@ -112,7 +116,8 @@ public class C3sAotMasterOp extends Operator {
     private boolean positiveDefinite;
 
     @Parameter(label = "Least positive value",
-            description = "Tiny number, used if an aerosol optical depth is zero (e.g., due to discretization) even though it is considered positive definite.",
+            description = "Tiny number, used if an aerosol optical depth is zero " +
+                    "(e.g., due to discretization) even though it is considered positive definite.",
             defaultValue = "1.0E-10")
     private double tiny;
 
@@ -122,12 +127,14 @@ public class C3sAotMasterOp extends Operator {
     private File repository;
 
     @Parameter(label = "Regression coefficient",
-            description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            description = "The regression coefficient (see score summary " +
+                    "statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
             defaultValue = "1.0")
     private double regressionCoefficient;
 
     @Parameter(label = "Regression constant",
-            description = "The regression constant (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            description = "The regression constant (see score summary " +
+                    "statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
             defaultValue = "0.0")
     private double regressionConstant;
 
@@ -137,12 +144,15 @@ public class C3sAotMasterOp extends Operator {
     private String errorCorrelationType;
 
     @Parameter(label = "Error correlation coefficient",
-            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
+            description = "The error correlation coefficient (used to generate a " +
+                    "sequence of correlated random numbers).",
             defaultValue = "0.0", interval = "[0.0, 1.0]")
     private double errorCorrelationCoefficient;
 
     @Parameter(label = "Use constant bias",
-            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
+            description = "If checked, all random numbers are correlated with a " +
+                    "constant bias rather than a random bias (using the specified " +
+                    "error correlation coefficient).",
             defaultValue = "false")
     private boolean useConstantBias;
 
@@ -178,7 +188,8 @@ public class C3sAotMasterOp extends Operator {
         RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
 
         Product reflProduct;
-        if (sensor == S3OlciSlstrSensor.OLCI_SLSTR_NOMINAL || sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3A || sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3B) {
+        if (sensor == S3OlciSlstrSensor.OLCI_SLSTR_NOMINAL || sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3A ||
+                sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3B) {
             C3sAotOlciSlstrOp aotOlciSlstrOp = new C3sAotOlciSlstrOp();
             aotOlciSlstrOp.setSourceProduct(sourceProduct);
             aotOlciSlstrOp.setParameterDefaultValues();
@@ -225,54 +236,63 @@ public class C3sAotMasterOp extends Operator {
 
         Product fillAotProduct = aotDownsclProduct;
         if (!noFilling) {
-            Map<String, Product> fillSourceProds = new HashMap<>(2);
+            Map<String, Product> fillSourceProds = new HashMap<>();
             fillSourceProds.put("aotProduct", aotDownsclProduct);
             // fill of AOT gaps on low-resolution grid:
-            fillAotProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sGapFillingOp.class), GPF.NO_PARAMS, fillSourceProds);
+            final String gapFillingOpAlias = OperatorSpi.getOperatorAlias(C3sGapFillingOp.class);
+            fillAotProduct = GPF.createProduct(gapFillingOpAlias, GPF.NO_PARAMS, fillSourceProds);
         }
 
         Product aotFinalProduct = fillAotProduct;
         if (!noUpscaling) {
-            Map<String, Product> upsclProducts = new HashMap<>(2);
+            Map<String, Product> upsclProducts = new HashMap<>();
             upsclProducts.put("lowresProduct", fillAotProduct);
             upsclProducts.put("hiresProduct", reflProduct);
-            Map<String, Object> sclParams = new HashMap<>(1);
+            Map<String, Object> sclParams = new HashMap<>();
             sclParams.put("sensor", S3OlciSlstrSensor.OLCI_SLSTR_S3B);
             sclParams.put("scale", scale);
             sclParams.put("computeAotEverywhere", computeAotEverywhere);
 
-            Product aotHiresProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotHighresOp.class), sclParams, upsclProducts, rhTarget);
+            final String aotHighresOpAlias = OperatorSpi.getOperatorAlias(C3sAotHighresOp.class);
+            Product aotHiresProduct = GPF.createProduct(aotHighresOpAlias, sclParams, upsclProducts, rhTarget);
 
-//            targetProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
             mergedAotProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
             ProductUtils.copyPreferredTileSize(reflProduct, mergedAotProduct);
             aotFinalProduct = mergedAotProduct;
         }
 
         if (mutant) {
-            // TODO: write new Op which applies the MC contributions. Leave HighresOp and GapFillingOp unchanged.
-            Map<String, Product> mutantProducts = new HashMap<>(2);
+            Map<String, Product> mutantProducts = new HashMap<>();
             mutantProducts.put("sourceProduct", mergedAotProduct);
 
-            Map<String, Object> mutantParams = new HashMap<>(1);
-            mutantParams.put("mutant", mutant);
-            mutantParams.put("rngType", rngType);
-            mutantParams.put("seedNumber", seedNumber);
-            mutantParams.put("seedString", seedString);
-            mutantParams.put("regressionCoefficient", regressionCoefficient);
-            mutantParams.put("regressionConstant", regressionConstant);
-            mutantParams.put("errorCorrelationType", errorCorrelationType);
-            mutantParams.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
-            mutantParams.put("useConstantBias", useConstantBias);
-            mutantParams.put("bias", bias);
-            mutantParams.put("uncertaintyModelType", uncertaintyModelType);
+            final Map<String, Object> mutantParams = getAotMutantParamsMap();
 
-            aotFinalProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotMutantOp.class),
+            final Product aotMutantProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotMutantOp.class),
                     mutantParams, mutantProducts, rhTarget);
 
+            Band aotOrigBand = aotFinalProduct.getBand(OlciSlstrAcConstants.AOT_BAND_NAME);
+            aotFinalProduct.removeBand(aotOrigBand);
+            ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotMutantProduct, aotFinalProduct, true);
         }
 
         setTargetProduct(aotFinalProduct);
+    }
+
+    private @NonNull Map<String, Object> getAotMutantParamsMap() {
+        Map<String, Object> mutantParams = new HashMap<>();
+        mutantParams.put("mutant", mutant);
+        mutantParams.put("rngType", rngType);
+        mutantParams.put("seedNumber", seedNumber);
+        mutantParams.put("seedString", seedString);
+        mutantParams.put("regressionCoefficient", regressionCoefficient);
+        mutantParams.put("regressionConstant", regressionConstant);
+        mutantParams.put("errorCorrelationType", errorCorrelationType);
+        mutantParams.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
+        mutantParams.put("useConstantBias", useConstantBias);
+        mutantParams.put("bias", bias);
+        mutantParams.put("uncertaintyModelType", uncertaintyModelType);
+
+        return mutantParams;
     }
 
     private Product mergeToTargetProduct(Product reflProduct, Product aotHiresProduct) {

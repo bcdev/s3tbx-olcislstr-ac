@@ -139,7 +139,6 @@ public class OlciSlstrAcOp extends Operator {
     private Product sourceProduct;
 
     private Pcg pcg;
-    private double radBias;
     private double camsBias;
     @SuppressWarnings("FieldCanBeLocal")
     private Multivariate mv;
@@ -159,10 +158,11 @@ public class OlciSlstrAcOp extends Operator {
 
         sensor = determineSensor(sourceProduct);
 
-        // begin generation of I/O mutants...
         pcg = new Pcg(seed, selector);
         mv = multivariate(samplingType);
+        mutant = isMutant();
 
+        // generation of AOT mutant is triggered in C3sAotMasterOp...
         Product aotProduct;
         aotProduct = processAot(sourceProduct);
         if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
@@ -178,10 +178,9 @@ public class OlciSlstrAcOp extends Operator {
         }
 
 
-
-        // generation of radiance/reflectance mutant
+        // TODO: generation of radiance/reflectance mutant
         if (radUseConstantBias) {
-            radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+            double radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
         }
 
         if (camsUseConstantBias) {
@@ -189,11 +188,9 @@ public class OlciSlstrAcOp extends Operator {
         }
 
         // generation of SDR mutant
-        mutant = isMutant();
-        if (mutant) {
+        if (mutant && !aotOnly) {
             setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
         }
-        // end generation of mutants
 
         if (copyAotBands && !aotOnly) {
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
@@ -204,7 +201,7 @@ public class OlciSlstrAcOp extends Operator {
 
         }
 
-        if (copyGeometryBands) {
+        if (copyGeometryBands && !aotOnly) {
             for (String geomBandNameOlci : sensor.getGeomBandNamesOlci()) {
                 copySourceBands(geomBandNameOlci);
             }
@@ -338,24 +335,6 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useUncertaintyModel", true);
         map.put("uncertaintyModelType", "Relative");
         map.put("measurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
-        return map;
-    }
-
-    @NotNull
-    private Map<String, Object> aerosolRetrievalParameterMap() {
-        final Map<String, Object> map = new HashMap<>();
-        map.put("mutant", mutant);
-        map.put("rngType", MELG);
-        map.put("seedNumber", pcg.nextLong());
-        map.put("seedString", DATE_AND_TIME_OF_PARENT);
-        map.put("repository", camsRepository);
-        map.put("regressionCoefficient", camsRegressionCoefficient);
-        map.put("regressionConstant", camsRegressionConstant);
-        map.put("errorCorrelationType", camsErrorCorrelationType);
-        map.put("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
-        map.put("useConstantBias", camsUseConstantBias);
-        map.put("bias", camsBias);
-        map.put("uncertaintyModelType", camsUncertaintyModelType);
         return map;
     }
 
