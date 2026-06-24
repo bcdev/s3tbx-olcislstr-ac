@@ -21,7 +21,7 @@ package org.esa.s3tbx.c3solcislstr.mc.operators;
  *
  * @author Ralf Quast
  */
-interface Cube extends Vector {
+public interface Cube extends Vector {
 
     /**
      * Returns the depth of the cube (i.e., its extend along the z-axis, e.g., spectral).

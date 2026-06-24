@@ -20,6 +20,7 @@ import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedOp;
 import java.awt.Dimension;
 import java.awt.RenderingHints;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,6 +85,80 @@ public class C3sAotMasterOp extends Operator {
     @Parameter(defaultValue = "false", label = " If set, AOT are computed everywhere (brute force, ignores clouds etc.)")
     private boolean computeAotEverywhere;
 
+
+    /// MC related parameters...
+    @Parameter(label = "Mutant",
+            description = "If checked, the aerosol product is mutated randomly.",
+            defaultValue = "true")
+    private boolean mutant;
+
+    @Parameter(label = "Random number generator",
+            description = "The type of random number generator",
+            defaultValue = "MELG", valueSet = {"MELG", "PCG"})
+    private String rngType;
+
+    @Parameter(label = "Seed number",
+            description = "A numeric value to seed the random number generator",
+            defaultValue = "5489")
+    private long seedNumber;
+
+    @Parameter(label = "Seed string",
+            description = "An alphanumeric value to seed the random number generator (US-ASCII character set). If empty, the seed value is determined by the date and time associated with the CAMS parent product.")
+    private String seedString;
+
+    @Parameter(label = "Positive definite",
+            description = "If checked, the aerosol optical depth is considered positive definite.",
+            defaultValue = "true")
+    private boolean positiveDefinite;
+
+    @Parameter(label = "Least positive value",
+            description = "Tiny number, used if an aerosol optical depth is zero (e.g., due to discretization) even though it is considered positive definite.",
+            defaultValue = "1.0E-10")
+    private double tiny;
+
+    @Parameter(label = "CAMS repository",
+            description = "Location of the CAMS aerosol product repository (or of a specific product file)",
+            notNull = true, notEmpty = true)
+    private File repository;
+
+    @Parameter(label = "Regression coefficient",
+            description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            defaultValue = "1.0")
+    private double regressionCoefficient;
+
+    @Parameter(label = "Regression constant",
+            description = "The regression constant (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            defaultValue = "0.0")
+    private double regressionConstant;
+
+    @Parameter(label = "Error correlation",
+            description = "The type of error correlation",
+            defaultValue = "None", valueSet = {"None", "Constant"})
+    private String errorCorrelationType;
+
+    @Parameter(label = "Error correlation coefficient",
+            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
+            defaultValue = "0.0", interval = "[0.0, 1.0]")
+    private double errorCorrelationCoefficient;
+
+    @Parameter(label = "Use constant bias",
+            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
+            defaultValue = "false")
+    private boolean useConstantBias;
+
+    @Parameter(label = "Constant bias",
+            description = "A constant bias value, which must be a draw from a standard normal distribution.",
+            defaultValue = "0.0")
+    private double bias;
+
+    @Parameter(label = "CAMS uncertainty model",
+            description = "The type of uncertainty model",
+            defaultValue = "CAMS AOD (2020)",
+            valueSet = {"CAMS AOD (2020)", "Relative (10%)", "Relative (15%)", "Relative (20%)"})
+    private String uncertaintyModelType;
+
+    /// end MC related parameters
+
     @SourceProduct
     private Product sourceProduct;
 
@@ -91,6 +166,7 @@ public class C3sAotMasterOp extends Operator {
     private Product targetProduct;
 
     public static final Product EMPTY_PRODUCT = new Product("empty", "empty", 0, 0);
+    private Product mergedAotProduct;
 
     @Override
     public void initialize() throws OperatorException {
@@ -144,6 +220,7 @@ public class C3sAotMasterOp extends Operator {
         aotLowresOp.setParameter("scale", scale);
         aotLowresOp.setParameter("ndviThreshold", ndviThr);
         aotLowresOp.setParameter("computeAotEverywhere", computeAotEverywhere);
+
         Product aotDownsclProduct = aotLowresOp.getTargetProduct();
 
         Product fillAotProduct = aotDownsclProduct;
@@ -154,22 +231,48 @@ public class C3sAotMasterOp extends Operator {
             fillAotProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sGapFillingOp.class), GPF.NO_PARAMS, fillSourceProds);
         }
 
-        targetProduct = fillAotProduct;
+        Product aotFinalProduct = fillAotProduct;
         if (!noUpscaling) {
             Map<String, Product> upsclProducts = new HashMap<>(2);
             upsclProducts.put("lowresProduct", fillAotProduct);
             upsclProducts.put("hiresProduct", reflProduct);
             Map<String, Object> sclParams = new HashMap<>(1);
-//            sclParams.put("sensor", sensor);
             sclParams.put("sensor", S3OlciSlstrSensor.OLCI_SLSTR_S3B);
             sclParams.put("scale", scale);
             sclParams.put("computeAotEverywhere", computeAotEverywhere);
+
             Product aotHiresProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotHighresOp.class), sclParams, upsclProducts, rhTarget);
 
-            targetProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
-            ProductUtils.copyPreferredTileSize(reflProduct, targetProduct);
+//            targetProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
+            mergedAotProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
+            ProductUtils.copyPreferredTileSize(reflProduct, mergedAotProduct);
+            aotFinalProduct = mergedAotProduct;
         }
-        setTargetProduct(targetProduct);
+
+        if (mutant) {
+            // TODO: write new Op which applies the MC contributions. Leave HighresOp and GapFillingOp unchanged.
+            Map<String, Product> mutantProducts = new HashMap<>(2);
+            mutantProducts.put("sourceProduct", mergedAotProduct);
+
+            Map<String, Object> mutantParams = new HashMap<>(1);
+            mutantParams.put("mutant", mutant);
+            mutantParams.put("rngType", rngType);
+            mutantParams.put("seedNumber", seedNumber);
+            mutantParams.put("seedString", seedString);
+            mutantParams.put("regressionCoefficient", regressionCoefficient);
+            mutantParams.put("regressionConstant", regressionConstant);
+            mutantParams.put("errorCorrelationType", errorCorrelationType);
+            mutantParams.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
+            mutantParams.put("useConstantBias", useConstantBias);
+            mutantParams.put("bias", bias);
+            mutantParams.put("uncertaintyModelType", uncertaintyModelType);
+
+            aotFinalProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotMutantOp.class),
+                    mutantParams, mutantProducts, rhTarget);
+
+        }
+
+        setTargetProduct(aotFinalProduct);
     }
 
     private Product mergeToTargetProduct(Product reflProduct, Product aotHiresProduct) {

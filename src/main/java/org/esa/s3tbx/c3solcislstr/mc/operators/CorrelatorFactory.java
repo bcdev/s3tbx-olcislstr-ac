@@ -16,7 +16,7 @@
 
 package org.esa.s3tbx.c3solcislstr.mc.operators;
 
-class CorrelatorFactory {
+public class CorrelatorFactory {
     private final String name;
 
     public CorrelatorFactory(String name) {

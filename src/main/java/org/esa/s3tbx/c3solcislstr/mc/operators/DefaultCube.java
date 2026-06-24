@@ -18,7 +18,7 @@ package org.esa.s3tbx.c3solcislstr.mc.operators;
 
 import java.util.stream.IntStream;
 
-final class DefaultCube extends DefaultVector implements Cube {
+public final class DefaultCube extends DefaultVector implements Cube {
 
     private final int l;
     private final int m;

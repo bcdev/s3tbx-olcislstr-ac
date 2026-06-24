@@ -96,10 +96,42 @@ public class OlciSlstrAcOp extends Operator {
             defaultValue = "true")
     private boolean radUseConstantBias;
 
+
+    @Parameter(label = "CAMS repository",
+            description = "Location of the CAMS aerosol product repository (or of a specific product file)",
+            notNull = true, notEmpty = true)
+    private File camsRepository;
+
+    @Parameter(label = "CAMS regression coefficient",
+            description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            defaultValue = "1.0")
+    private double camsRegressionCoefficient;
+
+    @Parameter(label = "CAMS regression constant",
+            description = "The regression constant (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
+            defaultValue = "0.0")
+    private double camsRegressionConstant;
+
+    @Parameter(label = "CAMS error correlation",
+            description = "The type of error correlation",
+            defaultValue = "Constant", valueSet = {"None", "Constant"})
+    private String camsErrorCorrelationType;
+
+    @Parameter(label = "CAMS error correlation coefficient",
+            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
+            defaultValue = "0.5", interval = "[0.0, 1.0]")
+    private double camsErrorCorrelationCoefficient;
+
     @Parameter(label = "Use constant CAMS bias",
             description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
             defaultValue = "true")
     private boolean camsUseConstantBias;
+
+    @Parameter(label = "CAMS uncertainty model",
+            description = "The type of uncertainty model",
+            defaultValue = "CAMS AOD (2020)",
+            valueSet = {"CAMS AOD (2020)", "Relative (10%)", "Relative (15%)", "Relative (20%)"})
+    private String camsUncertaintyModelType;
 
 
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
@@ -111,6 +143,7 @@ public class OlciSlstrAcOp extends Operator {
     private double camsBias;
     @SuppressWarnings("FieldCanBeLocal")
     private Multivariate mv;
+    private boolean mutant;
 
     private S3OlciSlstrSensor sensor;
 
@@ -125,6 +158,11 @@ public class OlciSlstrAcOp extends Operator {
         // 5. compute target product with SDR mutants, AOT mutant, and radiance mutants (OLCI + SLSTR)
 
         sensor = determineSensor(sourceProduct);
+
+        // begin generation of I/O mutants...
+        pcg = new Pcg(seed, selector);
+        mv = multivariate(samplingType);
+
         Product aotProduct;
         aotProduct = processAot(sourceProduct);
         if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
@@ -139,10 +177,9 @@ public class OlciSlstrAcOp extends Operator {
             setTargetProduct(processSdr(sourceProduct, aotProduct));
         }
 
-        ////////// begin generation of SDR mutant //////////
-        pcg = new Pcg(seed, selector);
-        mv = multivariate(samplingType);
 
+
+        // generation of radiance/reflectance mutant
         if (radUseConstantBias) {
             radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
         }
@@ -151,10 +188,12 @@ public class OlciSlstrAcOp extends Operator {
             camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
         }
 
-        if (isMutant()) {
+        // generation of SDR mutant
+        mutant = isMutant();
+        if (mutant) {
             setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
         }
-        ////////// end generation of SDR mutant //////////
+        // end generation of mutants
 
         if (copyAotBands && !aotOnly) {
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
@@ -208,6 +247,18 @@ public class OlciSlstrAcOp extends Operator {
         aotMasterOp.setParameter("useConstantAot", false);
         aotMasterOp.setParameter("constantAotValue", 0.15f);
         aotMasterOp.setParameter("computeAotEverywhere", computeAotEverywhere);
+        aotMasterOp.setParameter("mutant", mutant);
+        aotMasterOp.setParameter("rngType", MELG);
+        aotMasterOp.setParameter("seedNumber", pcg.nextLong());
+        aotMasterOp.setParameter("seedString", DATE_AND_TIME_OF_PARENT);
+        aotMasterOp.setParameter("repository", camsRepository);
+        aotMasterOp.setParameter("regressionCoefficient", camsRegressionCoefficient);
+        aotMasterOp.setParameter("regressionConstant", camsRegressionConstant);
+        aotMasterOp.setParameter("errorCorrelationType", camsErrorCorrelationType);
+        aotMasterOp.setParameter("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
+        aotMasterOp.setParameter("useConstantBias", camsUseConstantBias);
+        aotMasterOp.setParameter("bias", camsBias);
+        aotMasterOp.setParameter("uncertaintyModelType", camsUncertaintyModelType);
         aotMasterOp.setSourceProduct(productSourceAot);
 
         return aotMasterOp.getTargetProduct();
@@ -287,6 +338,24 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useUncertaintyModel", true);
         map.put("uncertaintyModelType", "Relative");
         map.put("measurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
+        return map;
+    }
+
+    @NotNull
+    private Map<String, Object> aerosolRetrievalParameterMap() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("mutant", mutant);
+        map.put("rngType", MELG);
+        map.put("seedNumber", pcg.nextLong());
+        map.put("seedString", DATE_AND_TIME_OF_PARENT);
+        map.put("repository", camsRepository);
+        map.put("regressionCoefficient", camsRegressionCoefficient);
+        map.put("regressionConstant", camsRegressionConstant);
+        map.put("errorCorrelationType", camsErrorCorrelationType);
+        map.put("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
+        map.put("useConstantBias", camsUseConstantBias);
+        map.put("bias", camsBias);
+        map.put("uncertaintyModelType", camsUncertaintyModelType);
         return map;
     }
 
