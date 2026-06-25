@@ -42,6 +42,11 @@ import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
 public class OlciSlstrAcOp extends Operator {
 
     @Parameter(defaultValue = "false",
+            label = "Only compute product with mutated input reflectances",
+            description = "If set, only product with mutated input reflectances is generated ")
+    private boolean mutatedReflsOnly;
+
+    @Parameter(defaultValue = "false",
             label = "Only compute AOT product",
             description = "If set, only AOT product is generated instead of full SDR product")
     private boolean aotOnly;
@@ -91,10 +96,25 @@ public class OlciSlstrAcOp extends Operator {
             defaultValue = "10")
     private int simulationCount;
 
+    @Parameter(label = "Radiance error correlation",
+            description = "The type of error correlation",
+            defaultValue = "Constant", valueSet = {"None", "Constant"})
+    private String radErrorCorrelationType;
+
+    @Parameter(label = "Radiance error correlation coefficient",
+            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
+            defaultValue = "0.5", interval = "[0.0, 1.0]")
+    private double radErrorCorrelationCoefficient;
+
     @Parameter(label = "Use constant radiance bias",
             description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
             defaultValue = "true")
     private boolean radUseConstantBias;
+
+    @Parameter(label = "Radiance uncertainty model",
+            description = "The type of uncertainty model",
+            defaultValue = "Relative", valueSet = {"Poisson", "Relative"})
+    private String radUncertaintyModelType;
 
 
     @Parameter(label = "CAMS repository",
@@ -145,26 +165,39 @@ public class OlciSlstrAcOp extends Operator {
     private boolean mutant;
 
     private S3OlciSlstrSensor sensor;
+    private double radBias;
 
     @Override
     public void initialize() throws OperatorException {
-
-        // TODO implement stepwise:
-        // 1. compute target product with SDR mutants (OLCI only)
-        // 2. compute target product with SDR mutants (OLCI + SLSTR)
-        // 3. compute target product with SDR mutants and AOT mutant
-        // 4. compute target product with SDR mutants, AOT mutant, and radiance mutants (OLCI only)
-        // 5. compute target product with SDR mutants, AOT mutant, and radiance mutants (OLCI + SLSTR)
-
         sensor = determineSensor(sourceProduct);
 
         pcg = new Pcg(seed, selector);
         mv = multivariate(samplingType);
         mutant = isMutant();
 
+        // generation of reflectances mutants...
+        Product mutatedSourceProduct;
+        if (mutant) {
+            if (radUseConstantBias) {
+                radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+            }
+            mutatedSourceProduct = mutateRadiance(sourceProduct);
+        } else {
+            mutatedSourceProduct = sourceProduct;
+        }
+
+        if (mutant && mutatedReflsOnly) {
+            // mainly for debugging/verification
+            setTargetProduct(mutatedSourceProduct);
+            return;
+        }
+
         // generation of AOT mutant is triggered in C3sAotMasterOp...
+        if (camsUseConstantBias) {
+            camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
+        }
         Product aotProduct;
-        aotProduct = processAot(sourceProduct);
+        aotProduct = processAot(mutatedSourceProduct);
         if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
             Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
             setTargetProduct(C3sAotMasterOp.EMPTY_PRODUCT);
@@ -172,19 +205,10 @@ public class OlciSlstrAcOp extends Operator {
         }
 
         if (aotOnly) {
+            // mainly for debugging/verification
             setTargetProduct(aotProduct);
         } else {
             setTargetProduct(processSdr(sourceProduct, aotProduct));
-        }
-
-
-        // TODO: generation of radiance/reflectance mutant
-        if (radUseConstantBias) {
-            double radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
-        }
-
-        if (camsUseConstantBias) {
-            camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
         }
 
         // generation of SDR mutant
@@ -238,29 +262,12 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     private Product processAot(Product productSourceAot) {
-        C3sAotMasterOp aotMasterOp = new C3sAotMasterOp();
-        aotMasterOp.setParameterDefaultValues();
-        aotMasterOp.setParameter("sensor", sensor);
-        aotMasterOp.setParameter("useConstantAot", false);
-        aotMasterOp.setParameter("constantAotValue", 0.15f);
-        aotMasterOp.setParameter("computeAotEverywhere", computeAotEverywhere);
-        aotMasterOp.setParameter("mutant", mutant);
-        aotMasterOp.setParameter("rngType", MELG);
-        aotMasterOp.setParameter("seedNumber", pcg.nextLong());
-        aotMasterOp.setParameter("seedString", DATE_AND_TIME_OF_PARENT);
-        aotMasterOp.setParameter("repository", camsRepository);
-        aotMasterOp.setParameter("regressionCoefficient", camsRegressionCoefficient);
-        aotMasterOp.setParameter("regressionConstant", camsRegressionConstant);
-        aotMasterOp.setParameter("errorCorrelationType", camsErrorCorrelationType);
-        aotMasterOp.setParameter("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
-        aotMasterOp.setParameter("useConstantBias", camsUseConstantBias);
-        aotMasterOp.setParameter("bias", camsBias);
-        aotMasterOp.setParameter("uncertaintyModelType", camsUncertaintyModelType);
-        aotMasterOp.setSourceProduct(productSourceAot);
-
-        return aotMasterOp.getTargetProduct();
+        return GPF.createProduct(getName(C3sAotMasterOp.class), aerosolRetrievalParameterMap(), productSourceAot);
     }
 
+    private Product mutateRadiance(Product product) {
+        return GPF.createProduct(getName(RadianceMutationOp.class), radianceMutationParameterMap(), product);
+    }
 
     private Product processSdr(Product sourceProduct, Product aotProduct) {
         C3sSdrOlciSlstrOp sdrOp;
@@ -272,12 +279,14 @@ public class OlciSlstrAcOp extends Operator {
             default:
                 throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
         }
+
         sdrOp.setParameterDefaultValues();
         sdrOp.setSourceProduct("sourceProduct", sourceProduct);
         sdrOp.setSourceProduct("aotProduct", aotProduct);
         sdrOp.setParameter("sensor", sensor);
         sdrOp.setParameter("computeSdrEverywhere", computeSdrEverywhere);
         sdrOp.setParameter("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
+
         switch (sensor) {
             case OLCI_SLSTR_S3A:
                 final String olciALutName =
@@ -323,6 +332,45 @@ public class OlciSlstrAcOp extends Operator {
 
     private static String getName(Class<? extends Operator> operatorClass) {
         return OperatorSpi.getOperatorAlias(operatorClass);  // returns an alias or simple class name
+    }
+
+    @NotNull
+    private Map<String, Object> radianceMutationParameterMap() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("rngType", MELG);
+        map.put("seedNumber", pcg.nextLong());
+        map.put("seedString", DATE_AND_TIME_OF_SOURCE);
+        map.put("positiveDefinite", true);
+        map.put("errorCorrelationType", radErrorCorrelationType);
+        map.put("errorCorrelationCoefficient", radErrorCorrelationCoefficient);
+        map.put("useConstantBias", radUseConstantBias);
+        map.put("bias", radBias);
+        map.put("uncertaintyModelType", radUncertaintyModelType);
+        map.put("measurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
+        map.put("useUncertaintyModel", true);
+        return map;
+    }
+
+    @NotNull
+    private Map<String, Object> aerosolRetrievalParameterMap() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("sensor", sensor);
+        map.put("useConstantAot", false);
+        map.put("constantAotValue",  0.15f);
+        map.put("computeAotEverywhere", computeAotEverywhere);
+        map.put("mutant", mutant);
+        map.put("rngType", MELG);
+        map.put("seedNumber", pcg.nextLong());
+        map.put("seedString", DATE_AND_TIME_OF_PARENT);
+        map.put("repository", camsRepository);
+        map.put("regressionCoefficient", camsRegressionCoefficient);
+        map.put("regressionConstant", camsRegressionConstant);
+        map.put("errorCorrelationType", camsErrorCorrelationType);
+        map.put("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
+        map.put("useConstantBias", camsUseConstantBias);
+        map.put("bias", camsBias);
+        map.put("uncertaintyModelType", camsUncertaintyModelType);
+        return map;
     }
 
     @NotNull
