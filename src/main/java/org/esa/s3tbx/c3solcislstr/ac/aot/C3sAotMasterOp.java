@@ -94,6 +94,11 @@ public class C3sAotMasterOp extends Operator {
             defaultValue = "true")
     private boolean mutant;
 
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on input reflectances",
+            description = "If set, AOT is mutated ")
+    private boolean mutateAot;
+
     @Parameter(label = "Random number generator",
             description = "The type of random number generator",
             defaultValue = "MELG", valueSet = {"MELG", "PCG"})
@@ -261,7 +266,7 @@ public class C3sAotMasterOp extends Operator {
             aotFinalProduct = mergedAotProduct;
         }
 
-        if (mutant) {
+        if (mutant && mutateAot) {
             Map<String, Product> mutantProducts = new HashMap<>();
             mutantProducts.put("sourceProduct", mergedAotProduct);
 

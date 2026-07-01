@@ -14,9 +14,8 @@
  * with this program; if not, see http://www.gnu.org/licenses/.
  */
 
-package  org.esa.s3tbx.c3solcislstr.mc.operators;
+package org.esa.s3tbx.c3solcislstr.mc.operators;
 
-import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.mc.RandomVariate;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModelFactory;
@@ -47,13 +46,13 @@ import java.util.Scanner;
  *
  * @author Ralf Quast
  */
-@OperatorMetadata(alias = "RadianceMutator",
+@OperatorMetadata(alias = "SdrMutator",
         category = "OLCI",
         version = "0.1",
         authors = "Ralf Quast",
         copyright = "(c) 2020 by Brockmann Consult",
         description = "Adds Gaussian noise to measurement values (i.e. spectral radiance). For use in Monte Carlo simulations.")
-public class RadianceMutationOp extends PixelOperator {
+public class SdrMutationOp extends PixelOperator {
 
     @Parameter(label = "Random number generator",
             description = "The type of random number generator",
@@ -148,9 +147,21 @@ public class RadianceMutationOp extends PixelOperator {
     private Cube random;
 
     @Override
+    protected void prepareInputs() throws OperatorException {
+        try {
+            initializeRandomNumbers();
+        } catch (Exception e) {
+            throw new OperatorException("Random noise could not be initialized.", e);
+        }
+        if (useUncertaintyModel) {
+            initializeUncertaintyModel();
+        }
+    }
+
+    @Override
     protected void configureTargetProduct(ProductConfigurer c) {
         c.getTargetProduct().setProductType(c.getSourceProduct().getProductType());
-        c.copyMetadata();
+//        c.copyMetadata();
         c.copyTimeCoding();
         c.copyTiePointGrids();
         for (String name : measurandNames) {
@@ -172,20 +183,25 @@ public class RadianceMutationOp extends PixelOperator {
 
     @Override
     protected void computePixel(int x, int y, Sample[] sourceSamples, WritableSample[] targetSamples) {
-        final double[] z = random.spectrum(x, y);
+        //        final double[] z = random.spectrum(x, y);
+//
+//        if (useUncertaintyModel) {
+//            for (int i = 0; i < measurandNames.length; i++) {
+//                final double measurement = getSampleValue(sourceSamples[i], x, y);
+//                final double uncertainty = uncertaintyModel.getUncertainty(measurement, coefficients[i]);
+//                setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
+//            }
+//        } else {
+//            for (int i = 0, j = 0; i < measurandNames.length; i++) {
+//                final double measurement = getSampleValue(sourceSamples[j++], x, y);
+//                final double uncertainty = getSampleValue(sourceSamples[j++], x, y);
+//                setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
+//            }
+//        }
 
-        if (useUncertaintyModel) {
-            for (int i = 0; i < measurandNames.length; i++) {
-                final double measurement = getSampleValue(sourceSamples[i], x, y);
-                final double uncertainty = uncertaintyModel.getUncertainty(measurement, coefficients[i]);
-                setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
-            }
-        } else {
-            for (int i = 0, j = 0; i < measurandNames.length; i++) {
-                final double measurement = getSampleValue(sourceSamples[j++], x, y);
-                final double uncertainty = getSampleValue(sourceSamples[j++], x, y);
-                setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
-            }
+        for (int i = 0; i < measurandNames.length; i++) {
+            final double measurement = getSampleValue(sourceSamples[i], x, y);
+            setSampleValue(targetSamples[i], measurement);
         }
     }
 
@@ -228,17 +244,17 @@ public class RadianceMutationOp extends PixelOperator {
         }
     }
 
-    @Override
-    public void doExecute(ProgressMonitor pm) {
-        try {
-            initializeRandomNumbers();
-        } catch (Exception e) {
-            throw new OperatorException("Random noise could not be initialized.", e);
-        }
-        if (useUncertaintyModel) {
-            initializeUncertaintyModel();
-        }
-    }
+//    @Override
+//    public void doExecute(ProgressMonitor pm) {
+//        try {
+//            initializeRandomNumbers();
+//        } catch (Exception e) {
+//            throw new OperatorException("Random noise could not be initialized.", e);
+//        }
+//        if (useUncertaintyModel) {
+//            initializeUncertaintyModel();
+//        }
+//    }
 
     private void initializeRandomNumbers() {
         try {
@@ -284,7 +300,7 @@ public class RadianceMutationOp extends PixelOperator {
         if (uncertaintyModel.getCoefficientCount() > 0) {
             final InputStream is;
             if (uncertaintyModelCoefficientFile == null) {
-                is = RadianceMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
+                is = SdrMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
             } else {
                 try {
                     is = new FileInputStream(uncertaintyModelCoefficientFile);
@@ -338,7 +354,7 @@ public class RadianceMutationOp extends PixelOperator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(RadianceMutationOp.class);
+            super(SdrMutationOp.class);
         }
     }
 }

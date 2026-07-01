@@ -7,7 +7,8 @@ import org.esa.s3tbx.c3solcislstr.mc.generators.LatinHypercube;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Melg;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Pcg;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Sobol;
-import org.esa.s3tbx.c3solcislstr.mc.operators.RadianceMutationOp;
+import org.esa.s3tbx.c3solcislstr.mc.operators.ReflectanceMutationOp;
+import org.esa.s3tbx.c3solcislstr.mc.operators.SdrMutationOp;
 import org.esa.s3tbx.c3solcislstr.mc.variates.BoxMullerNormalVariate;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.RasterDataNode;
@@ -50,6 +51,21 @@ public class OlciSlstrAcOp extends Operator {
             label = "Only compute AOT product",
             description = "If set, only AOT product is generated instead of full SDR product")
     private boolean aotOnly;
+
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on input reflectances",
+            description = "If set, input reflectances are mutated ")
+    private boolean mutateInputRefls;
+
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on input reflectances",
+            description = "If set, AOT is mutated ")
+    private boolean mutateAot;
+
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on input reflectances",
+            description = "If set, SDR are mutated ")
+    private boolean mutateSdr;
 
     @Parameter(defaultValue = "true",
             label = "Copy AOT bands into SDR product",
@@ -177,16 +193,17 @@ public class OlciSlstrAcOp extends Operator {
 
         // generation of reflectances mutants...
         Product mutatedSourceProduct;
-        if (mutant) {
+        if (mutant && mutateInputRefls) {
             if (radUseConstantBias) {
                 radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
             }
-            mutatedSourceProduct = mutateRadiance(sourceProduct);
+            mutatedSourceProduct = mutateInputReflectance(sourceProduct);
         } else {
             mutatedSourceProduct = sourceProduct;
         }
+//        mutatedSourceProduct = sourceProduct;
 
-        if (mutant && mutatedReflsOnly) {
+        if (mutant && mutateInputRefls && mutatedReflsOnly) {
             // mainly for debugging/verification
             setTargetProduct(mutatedSourceProduct);
             return;
@@ -212,7 +229,7 @@ public class OlciSlstrAcOp extends Operator {
         }
 
         // generation of SDR mutant
-        if (mutant && !aotOnly) {
+        if (mutant && !aotOnly && mutateSdr) {
             setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
         }
 
@@ -247,7 +264,6 @@ public class OlciSlstrAcOp extends Operator {
         }
     }
 
-
     private S3OlciSlstrSensor determineSensor(Product l1bProduct) {
         if (l1bProduct.getName().contains("SY_1_")) {
             if (l1bProduct.getName().startsWith("S3A_SY_1_SYN")) {
@@ -265,8 +281,8 @@ public class OlciSlstrAcOp extends Operator {
         return GPF.createProduct(getName(C3sAotMasterOp.class), aerosolRetrievalParameterMap(), productSourceAot);
     }
 
-    private Product mutateRadiance(Product product) {
-        return GPF.createProduct(getName(RadianceMutationOp.class), radianceMutationParameterMap(), product);
+    private Product mutateInputReflectance(Product product) {
+        return GPF.createProduct(getName(ReflectanceMutationOp.class), inputReflMutationParameterMap(), product);
     }
 
     private Product processSdr(Product sourceProduct, Product aotProduct) {
@@ -275,6 +291,7 @@ public class OlciSlstrAcOp extends Operator {
             case OLCI_SLSTR_S3A:
             case OLCI_SLSTR_S3B:
                 sdrOp = new C3sSdrOlciSlstrOp();
+
                 break;
             default:
                 throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
@@ -327,7 +344,7 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     private Product mutateSurfaceReflectance(Product product) {
-        return GPF.createProduct(getName(RadianceMutationOp.class), surfaceReflectanceMutationParameterMap(), product);
+        return GPF.createProduct(getName(SdrMutationOp.class), surfaceReflectanceMutationParameterMap(), product);
     }
 
     private static String getName(Class<? extends Operator> operatorClass) {
@@ -335,7 +352,7 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     @NotNull
-    private Map<String, Object> radianceMutationParameterMap() {
+    private Map<String, Object> inputReflMutationParameterMap() {
         final Map<String, Object> map = new HashMap<>();
         map.put("rngType", MELG);
         map.put("seedNumber", pcg.nextLong());
@@ -359,6 +376,7 @@ public class OlciSlstrAcOp extends Operator {
         map.put("constantAotValue",  0.15f);
         map.put("computeAotEverywhere", computeAotEverywhere);
         map.put("mutant", mutant);
+        map.put("mutateAot", mutateAot);
         map.put("rngType", MELG);
         map.put("seedNumber", pcg.nextLong());
         map.put("seedString", DATE_AND_TIME_OF_PARENT);

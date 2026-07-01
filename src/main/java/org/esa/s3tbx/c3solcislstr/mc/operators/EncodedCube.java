@@ -18,7 +18,7 @@ package org.esa.s3tbx.c3solcislstr.mc.operators;
 
 import java.util.stream.IntStream;
 
-final class EncodedCube extends EncodedVector implements Cube {
+public final class EncodedCube extends EncodedVector implements Cube {
 
     private final int l;
     private final int m;

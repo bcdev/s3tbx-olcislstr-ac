@@ -7,3 +7,5 @@ org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotLowresOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotHighresOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sCreateElevationBandOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sGapFillingOp$Spi
+org.esa.s3tbx.c3solcislstr.mc.operators.ReflectanceMutationOp$Spi
+org.esa.s3tbx.c3solcislstr.mc.operators.SdrMutationOp$Spi
