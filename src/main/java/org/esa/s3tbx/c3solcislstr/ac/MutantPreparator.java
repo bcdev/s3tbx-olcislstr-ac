@@ -29,36 +29,27 @@ public class MutantPreparator {
             final int h = sourceProduct.getSceneRasterHeight();
             final int w = sourceProduct.getSceneRasterWidth();
             final int n = measurandNames.length;
+
             final long[] seeds = {seedNumber, anotherSeedNumber(sourceProduct, seedString, seedNumber)};
-            final RandomVariate normal = new MarsagliaNormalVariate(new UniformVariateFactory(rngType).newUniformVariate(seeds));
+            final RandomVariate normal =
+                    new MarsagliaNormalVariate(new UniformVariateFactory(rngType).newUniformVariate(seeds));
+
             if (!useConstantBias) {
                 bias = normal.nextDouble();
             } else {
                 normal.nextDouble();  // to preserve consistency
             }
+
             final byte[] encoded = new byte[h * w * n];
             final ErrorCodec codec = new ErrorCodecFactory(errorCodecType).newErrorCodec();
             for (int i = 0; i < encoded.length; i++) {
                 encoded[i] = codec.encode(normal.nextDouble());
             }
             final CorrelatorFactory correlatorFactory = new CorrelatorFactory(errorCorrelationType);
-            final Cube random = correlatorFactory.newCorrelator(new EncodedCube(h, w, n, encoded, codec), bias, errorCorrelationCoefficient);
-            return random;
+            return correlatorFactory.newCorrelator(new EncodedCube(h, w, n, encoded, codec), bias, errorCorrelationCoefficient);
         } catch (Exception e) {
             throw new OperatorException("Random numbers could not be initialized.", e);
         }
-    }
-
-    private static long anotherSeedNumber(Product sourceProduct, String seedString, long seedNumber) {
-        if (seedString != null) {
-            for (final byte b : seedString.getBytes(StandardCharsets.US_ASCII)) {
-                seedNumber = 31 * seedNumber + Byte.toUnsignedLong(b);
-            }
-        }
-        if (sourceProduct.getStartTime() != null) {
-            seedNumber = 31 * seedNumber + Double.doubleToLongBits(sourceProduct.getStartTime().getMJD());
-        }
-        return seedNumber;
     }
 
     public static UncertaintyModel initializeUncertaintyModel(String uncertaintyModelType) {
@@ -98,6 +89,39 @@ public class MutantPreparator {
             throw new OperatorException("Cannot initialize coefficients for uncertainty model. Please check.");
         }
 
+    }
+
+    public static double getMutatedValue(double x, double u, double z, boolean positiveDefinite) {
+        if (positiveDefinite) {
+            return getMutatedValueLognormal(x, u, z);
+        }
+        return getMutatedValueNormal(x, u, z);
+    }
+
+    private static long anotherSeedNumber(Product sourceProduct, String seedString, long seedNumber) {
+        if (seedString != null) {
+            for (final byte b : seedString.getBytes(StandardCharsets.US_ASCII)) {
+                seedNumber = 31 * seedNumber + Byte.toUnsignedLong(b);
+            }
+        }
+        if (sourceProduct.getStartTime() != null) {
+            seedNumber = 31 * seedNumber + Double.doubleToLongBits(sourceProduct.getStartTime().getMJD());
+        }
+        return seedNumber;
+    }
+
+    private static double getMutatedValueLognormal(double x, double u, double z) {
+        final double v = Math.log(1.0 + square(u / x));
+        final double e = Math.log(x) - 0.5 * v;
+        return Math.exp(getMutatedValueNormal(e, Math.sqrt(v), z));
+    }
+
+    private static double getMutatedValueNormal(double x, double u, double z) {
+        return x + u * z;
+    }
+
+    private static double square(double x) {
+        return x == 0.0 ? 0.0 : x * x;
     }
 
 }

@@ -3,12 +3,8 @@ package org.esa.s3tbx.c3solcislstr.ac;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
-import org.esa.s3tbx.c3solcislstr.mc.RandomVariate;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
-import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModelFactory;
-import org.esa.s3tbx.c3solcislstr.mc.UniformVariateFactory;
 import org.esa.s3tbx.c3solcislstr.mc.operators.*;
-import org.esa.s3tbx.c3solcislstr.mc.variates.MarsagliaNormalVariate;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -22,14 +18,9 @@ import org.esa.snap.core.gpf.pointop.*;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.InputMismatchException;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
 
 import static java.lang.Math.*;
 import static java.lang.StrictMath.toRadians;
-import static org.esa.s3tbx.c3solcislstr.ac.MutantPreparator.initializeUncertaintyModel;
 
 @OperatorMetadata(alias = "Sdr.C3sOlciSlstr", version = "0.8",
         authors = "G. Kirches, O.Danne, M.Peters",
@@ -68,15 +59,30 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private File pathToLutSlstr;
 
 
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on input TOA reflectances",
+            description = "If set, input TOA reflectances are mutated ")
+    private boolean mutateToa;
+
+    @Parameter(defaultValue = "true",
+            label = "Apply mutation on SDR reflectances",
+            description = "If set, computed SDR are mutated ")
+    private boolean mutateSdr;
+
     @Parameter(label = "Random number generator",
             description = "The type of random number generator",
             defaultValue = "MELG", valueSet = {"MELG", "PCG"})
     private String rngType;
 
-    @Parameter(label = "Seed number",
-            description = "A numeric value to seed the random number generator",
+    @Parameter(label = "TOA seed number",
+            description = "A numeric value to seed the random number generator for TOA mutation",
             defaultValue = "5489")
-    private long seedNumber;
+    private long toaSeedNumber;
+
+    @Parameter(label = "SDR seed number",
+            description = "A numeric value to seed the random number generator for SDR mutation",
+            defaultValue = "5489")
+    private long sdrSeedNumber;
 
     @Parameter(label = "Seed string",
             description = "An alphanumeric value to seed the random number generator (US-ASCII character set). If empty, the seed value is determined by the date and time associated with the source product.")
@@ -88,21 +94,23 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private boolean positiveDefinite;
 
 
-    @Parameter(label = "Use an uncertainty model",
-            description = "Facilitates the use of a custom uncertainty model.",
-            defaultValue = "true")
-    private boolean useUncertaintyModel;
-
     @Parameter(label = "Uncertainty model",
             description = "The type of uncertainty model",
             defaultValue = "Poisson", valueSet = {"Poisson", "Relative"})
     private String uncertaintyModelType;
 
-    @Parameter(label = "Measurands",
-            description = "The measured quantities", notNull = true, notEmpty = true,
+    @Parameter(label = "TOA Measurands",
+            description = "The TOA measured quantities", notNull = true, notEmpty = true,
             rasterDataNodeType = Band.class,
             converter = NameConverter.class)
-    private String[] measurandNames;
+    private String[] toaMeasurandNames;
+
+    @Parameter(label = "SDR Measurands",
+            description = "The SDR measured quantities", notNull = true, notEmpty = true,
+            rasterDataNodeType = Band.class,
+            converter = NameConverter.class)
+    private String[] sdrMeasurandNames;
+
 
     @Parameter(label = "Error codec",
             description = "The type of error codec used",
@@ -135,9 +143,9 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private File uncertaintyModelCoefficientFile;
 
 
-    private UncertaintyModel toaUncertaintyModel;
-    private double[][] toaCoefficients;
+    private UncertaintyModel reflUncertaintyModel;
     private Cube toaRandom;
+    private double[][] toaCoefficients;
 
     private UncertaintyModel sdrUncertaintyModel;
     private double[][] sdrCoefficients;
@@ -234,15 +242,38 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             geophysicalNoDataValues[bandIndex] = getSourceProduct().getBandAt(SRC_TOA_RFL + bandIndex).getGeophysicalNoDataValue();
         }
 
-        try {
-            toaRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, measurandNames,
-                    seedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
-                    errorCorrelationType, errorCorrelationCoefficient);
-        } catch (Exception e) {
-            throw new OperatorException("Random noise could not be initialized.", e);
+        // MC mutant initialisation:
+        prepareMcMutations();
+    }
+
+    private void prepareMcMutations() {
+        if (mutateToa || mutateSdr) {
+            reflUncertaintyModel = MutantPreparator.initializeUncertaintyModel(uncertaintyModelType);
         }
-        if (useUncertaintyModel) {
-            toaUncertaintyModel = MutantPreparator.initializeUncertaintyModel(uncertaintyModelType);
+        if (mutateToa) {
+            try {
+                toaRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, toaMeasurandNames,
+                        toaSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
+                        errorCorrelationType, errorCorrelationCoefficient);
+            } catch (Exception e) {
+                throw new OperatorException("Random noise for TOA could not be initialized.", e);
+            }
+
+            toaCoefficients = MutantPreparator.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
+                    toaMeasurandNames, uncertaintyModelCoefficientFile);
+        }
+
+        if (mutateSdr) {
+            try {
+                sdrRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, sdrMeasurandNames,
+                        sdrSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
+                        errorCorrelationType, errorCorrelationCoefficient);
+            } catch (Exception e) {
+                throw new OperatorException("Random noise for SDR could not be initialized.", e);
+            }
+
+            sdrCoefficients = MutantPreparator.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
+                    sdrMeasurandNames, uncertaintyModelCoefficientFile);
         }
     }
 
@@ -288,6 +319,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
      * Position 1: IDEPIX_SNOW_ICE
      * Position 2-16: ancillary bands VZA .. WV
      * Position 17-43: Oa01_reflectance .. Sl06_reflectance_an
+     *
      * @param configurator
      */
     @Override
@@ -352,6 +384,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
      * Configures a stack of samples
      * Position 0-20: sdr_Oa01 .. sdr_Sl06
      * Position 21-41: sdr_error_Oa01 .. sdr_error_Sl06, optional, if writeSdrUncertaintyBands
+     *
      * @param configurator
      */
     @Override
@@ -469,11 +502,13 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
         }
 
         // reflectance bands correction loop
+        final double[] z = toaRandom.spectrum(x, y);
+
         int counter = 0;
         final int ERROR_TARGET_BAND_OFFSET = sensor.getSdrBandNames().length;
         for (int i = 0; i < sensor.getNumBands(); ++i) {
             // skip bands not to be corrected
-            if (! sensor.isToaBandToBeCorrected(i)) {
+            if (!sensor.isToaBandToBeCorrected(i)) {
                 continue;
             }
             // check for no-data value
@@ -485,7 +520,10 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                 }
             } else {
                 // NEW: apply mutation
-                final double uncertainty = toaUncertaintyModel.getUncertainty(toaRefl, toaCoefficients[i]);
+                if (mutateToa) {
+                    final double toaUncertainty = reflUncertaintyModel.getUncertainty(toaRefl, toaCoefficients[i]);
+                    toaRefl = MutantPreparator.getMutatedValue(toaRefl, toaUncertainty, z[i], positiveDefinite);
+                }
 
                 // apply calibration
                 toaRefl = toaRefl / sensor.getCalCoeff()[i];
@@ -520,9 +558,15 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                 // calculate corrected reflectance
                 toaRefl = toaRefl / tg;
                 final double x_term = (toaRefl - rpw) / ttot;
-                final double rfl_pix = x_term / (1. + sab * x_term);  //calculation of SDR
+                double sdr = x_term / (1. + sab * x_term);  //calculation of SDR
 
-                targetSamples[counter].set(rfl_pix);
+                // MC mutation:
+                if (mutateSdr) {
+                    final double sdrUncertainty = sdrUncertaintyModel.getUncertainty(sdr, sdrCoefficients[i]);
+                    sdr = MutantPreparator.getMutatedValue(sdr, sdrUncertainty, z[i], positiveDefinite);
+                }
+
+                targetSamples[counter].set(sdr);
 
                 // calculate uncertainty
                 if (writeSdrUncertaintyBands) {

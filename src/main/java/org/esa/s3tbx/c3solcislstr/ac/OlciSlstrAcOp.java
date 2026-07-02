@@ -43,28 +43,23 @@ import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
 public class OlciSlstrAcOp extends Operator {
 
     @Parameter(defaultValue = "false",
-            label = "Only compute product with mutated input reflectances",
-            description = "If set, only product with mutated input reflectances is generated ")
-    private boolean mutatedReflsOnly;
-
-    @Parameter(defaultValue = "false",
             label = "Only compute AOT product",
             description = "If set, only AOT product is generated instead of full SDR product")
     private boolean aotOnly;
 
     @Parameter(defaultValue = "true",
-            label = "Apply mutation on input reflectances",
-            description = "If set, input reflectances are mutated ")
-    private boolean mutateInputRefls;
+            label = "Apply mutation on input TOA reflectances",
+            description = "If set, input TOA reflectances are mutated ")
+    private boolean mutateToa;
 
     @Parameter(defaultValue = "true",
-            label = "Apply mutation on input reflectances",
+            label = "Apply mutation on AOT",
             description = "If set, AOT is mutated ")
     private boolean mutateAot;
 
     @Parameter(defaultValue = "true",
-            label = "Apply mutation on input reflectances",
-            description = "If set, SDR are mutated ")
+            label = "Apply mutation on SDR reflectances",
+            description = "If set, computed SDR are mutated ")
     private boolean mutateSdr;
 
     @Parameter(defaultValue = "true",
@@ -181,7 +176,7 @@ public class OlciSlstrAcOp extends Operator {
     private boolean mutant;
 
     private S3OlciSlstrSensor sensor;
-    private double radBias;
+    private double radBias = 0.0;
 
     @Override
     public void initialize() throws OperatorException {
@@ -189,32 +184,18 @@ public class OlciSlstrAcOp extends Operator {
 
         pcg = new Pcg(seed, selector);
         mv = multivariate(samplingType);
+        if (useConstantBias) {
+            radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+        }
         mutant = isMutant();
 
-        // generation of reflectances mutants...
-        Product mutatedSourceProduct;
-        if (mutant && mutateInputRefls) {
-            if (useConstantBias) {
-                radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
-            }
-            mutatedSourceProduct = mutateInputReflectance(sourceProduct);
-        } else {
-            mutatedSourceProduct = sourceProduct;
-        }
-//        mutatedSourceProduct = sourceProduct;
-
-        if (mutant && mutateInputRefls && mutatedReflsOnly) {
-            // mainly for debugging/verification
-            setTargetProduct(mutatedSourceProduct);
-            return;
-        }
 
         // generation of AOT mutant is triggered in C3sAotMasterOp...
         if (camsUseConstantBias) {
             camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
         }
         Product aotProduct;
-        aotProduct = processAot(mutatedSourceProduct);
+        aotProduct = processAot(sourceProduct);
         if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
             Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
             setTargetProduct(C3sAotMasterOp.EMPTY_PRODUCT);
@@ -225,13 +206,17 @@ public class OlciSlstrAcOp extends Operator {
             // mainly for debugging/verification
             setTargetProduct(aotProduct);
         } else {
-            setTargetProduct(processSdr(sourceProduct, aotProduct));
+            if (mutant && (mutateToa || mutateSdr)) {
+                setTargetProduct(processSdrMutated(sourceProduct, aotProduct));
+            } else {
+                setTargetProduct(processSdr(sourceProduct, aotProduct));
+            }
         }
 
         // generation of SDR mutant
-        if (mutant && !aotOnly && mutateSdr) {
-            setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
-        }
+//        if (mutant && !aotOnly && mutateSdr) {
+//            setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
+//        }
 
         if (copyAotBands && !aotOnly) {
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
@@ -273,7 +258,7 @@ public class OlciSlstrAcOp extends Operator {
             }
         } else {
             throw new OperatorException(String.format("Product of type '%s' not supported.",
-                                                      l1bProduct.getProductType()));
+                    l1bProduct.getProductType()));
         }
     }
 
@@ -286,89 +271,30 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     private Product processSdr(Product sourceProduct, Product aotProduct) {
-        C3sSdrOlciSlstrOp sdrOp;
-        switch (sensor) {
-            case OLCI_SLSTR_S3A:
-            case OLCI_SLSTR_S3B:
-                sdrOp = new C3sSdrOlciSlstrOp();
-
-                break;
-            default:
-                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
-        }
-
-        sdrOp.setParameterDefaultValues();
-        sdrOp.setSourceProduct("sourceProduct", sourceProduct);
-        sdrOp.setSourceProduct("aotProduct", aotProduct);
-        sdrOp.setParameter("sensor", sensor);
-        sdrOp.setParameter("computeSdrEverywhere", computeSdrEverywhere);
-        sdrOp.setParameter("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
-
-        switch (sensor) {
-            case OLCI_SLSTR_S3A:
-                final String olciALutName =
-                        pathToAtmosphericParameterLuts + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutOlci", olciALutName);
-                final String slstrALutName =
-                        pathToAtmosphericParameterLuts + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutSlstr", slstrALutName);
-                break;
-            case OLCI_SLSTR_S3B:
-                final String olciBLutName =
-                        pathToAtmosphericParameterLuts + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutOlci", olciBLutName);
-                final String slstrBLutName =
-                        pathToAtmosphericParameterLuts + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME;
-                sdrOp.setParameter("pathToLutSlstr", slstrBLutName);
-                break;
-            default:
-                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
-        }
-
-        return sdrOp.getTargetProduct();
+        Map<String, Product> sdrSourceProducts = new HashMap<>();
+        sdrSourceProducts.put("sourceProduct", sourceProduct);
+        sdrSourceProducts.put("aotProduct", aotProduct);
+        return GPF.createProduct(getName(C3sSdrOlciSlstrOp.class), sdrParameterMap(), sdrSourceProducts);
     }
 
     private Product processSdrMutated(Product sourceProduct, Product aotProduct) {
-        C3sSdrOlciSlstrMutantOp sdrMutantOp;
-        switch (sensor) {
-            case OLCI_SLSTR_S3A:
-            case OLCI_SLSTR_S3B:
-                sdrMutantOp = new C3sSdrOlciSlstrMutantOp();
-
-                break;
-            default:
-                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
-        }
-
-        sdrMutantOp.setParameterDefaultValues();
-        sdrMutantOp.setSourceProduct("sourceProduct", sourceProduct);
-        sdrMutantOp.setSourceProduct("aotProduct", aotProduct);
-        sdrMutantOp.setParameter("sensor", sensor);
-        sdrMutantOp.setParameter("computeSdrEverywhere", computeSdrEverywhere);
-        sdrMutantOp.setParameter("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
-
-        getPathToAtmosphericParametersLut(sdrMutantOp);
-
-        return sdrMutantOp.getTargetProduct();
+        Map<String, Product> sdrSourceProducts = new HashMap<>();
+        sdrSourceProducts.put("sourceProduct", sourceProduct);
+        sdrSourceProducts.put("aotProduct", aotProduct);
+        return GPF.createProduct(getName(C3sSdrOlciSlstrMutantOp.class), sdrMutantParameterMap(), sdrSourceProducts);
     }
 
-    private String getPathToAtmosphericParametersLut() {
-        String pathToLut = null;
-        switch (sensor) {
-            case OLCI_SLSTR_S3A:
-                final String olciALutName =
-                        pathToLut + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME;
-                final String slstrALutName =
-                        pathToLut + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME;
-                break;
-            case OLCI_SLSTR_S3B:
-                final String olciBLutName =
-                        pathToLut + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
-                final String slstrBLutName =
-                        pathToLut + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME;
-                break;
-            default:
-                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
+    private String[] getAtmosphericParametersLutFilePaths() {
+        if (sensor == S3OlciSlstrSensor.OLCI_SLSTR_S3A) {
+            return new String[]{
+                    pathToAtmosphericParameterLuts + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME,
+                    pathToAtmosphericParameterLuts + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME
+            };
+        } else {
+            return new String[]{
+                    pathToAtmosphericParameterLuts + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME,
+                    pathToAtmosphericParameterLuts + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME
+            };
         }
     }
 
@@ -418,7 +344,7 @@ public class OlciSlstrAcOp extends Operator {
         final Map<String, Object> map = new HashMap<>();
         map.put("sensor", sensor);
         map.put("useConstantAot", false);
-        map.put("constantAotValue",  0.15f);
+        map.put("constantAotValue", 0.15f);
         map.put("computeAotEverywhere", computeAotEverywhere);
         map.put("mutant", mutant);
         map.put("mutateAot", mutateAot);
@@ -450,8 +376,21 @@ public class OlciSlstrAcOp extends Operator {
     }
 
     @NotNull
-    private Map<String, Object> sdrMutantParameterMap() {
+    private Map<String, Object> sdrParameterMap() {
         final Map<String, Object> map = new HashMap<>();
+        map.put("sensor", sensor);
+        map.put("computeSdrEverywhere", computeSdrEverywhere);
+        map.put("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
+        final String[] s3aLutNames = getAtmosphericParametersLutFilePaths();
+        map.put("pathToLutOlci", s3aLutNames[0]);
+        map.put("pathToLutSlstr", s3aLutNames[1]);
+
+        return map;
+    }
+
+    @NotNull
+    private Map<String, Object> sdrMutantParameterMap() {
+        final Map<String, Object> map = sdrParameterMap();
         map.put("rngType", MELG);
         map.put("toaSeedNumber", pcg.nextLong());
         map.put("sdrSeedNumber", pcg.nextLong());
@@ -464,7 +403,9 @@ public class OlciSlstrAcOp extends Operator {
         map.put("uncertaintyModelType", uncertaintyModelType);
         map.put("toaMmeasurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
         map.put("sdrMmeasurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
-        map.put("useUncertaintyModel", true);
+        map.put("mutateToa", mutateSdr);
+        map.put("mutateSdr", mutateSdr);
+
         return map;
     }
 
