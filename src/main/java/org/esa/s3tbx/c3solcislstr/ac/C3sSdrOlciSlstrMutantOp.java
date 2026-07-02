@@ -29,6 +29,7 @@ import java.util.Scanner;
 
 import static java.lang.Math.*;
 import static java.lang.StrictMath.toRadians;
+import static org.esa.s3tbx.c3solcislstr.ac.MutantPreparator.initializeUncertaintyModel;
 
 @OperatorMetadata(alias = "Sdr.C3sOlciSlstr", version = "0.8",
         authors = "G. Kirches, O.Danne, M.Peters",
@@ -134,9 +135,13 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private File uncertaintyModelCoefficientFile;
 
 
-    private UncertaintyModel uncertaintyModel;
-    private double[][] coefficients;
-    private Cube random;
+    private UncertaintyModel toaUncertaintyModel;
+    private double[][] toaCoefficients;
+    private Cube toaRandom;
+
+    private UncertaintyModel sdrUncertaintyModel;
+    private double[][] sdrCoefficients;
+    private Cube sdrRandom;
 
     static final int SRC_LAND_MASK = 0;
     static final int SRC_SNOW_MASK = 1;
@@ -230,12 +235,14 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
         }
 
         try {
-            initializeRandomNumbers();
+            toaRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, measurandNames,
+                    seedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
+                    errorCorrelationType, errorCorrelationCoefficient);
         } catch (Exception e) {
             throw new OperatorException("Random noise could not be initialized.", e);
         }
         if (useUncertaintyModel) {
-            initializeUncertaintyModel();
+            toaUncertaintyModel = MutantPreparator.initializeUncertaintyModel(uncertaintyModelType);
         }
     }
 
@@ -274,73 +281,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             ProductUtils.copySpectralBandProperties(srcBand, band);
         }
     }
-
-    private void initializeRandomNumbers() {
-        try {
-            final int h = sourceProduct.getSceneRasterHeight();
-            final int w = sourceProduct.getSceneRasterWidth();
-            final int n = measurandNames.length;
-            final long[] seeds = {seedNumber, anotherSeedNumber(seedString, seedNumber)};
-            final RandomVariate normal = new MarsagliaNormalVariate(new UniformVariateFactory(rngType).newUniformVariate(seeds));
-            if (!useConstantBias) {
-                bias = normal.nextDouble();
-            } else {
-                normal.nextDouble();  // to preserve consistency
-            }
-            final byte[] encoded = new byte[h * w * n];
-            final ErrorCodec codec = new ErrorCodecFactory(errorCodecType).newErrorCodec();
-            for (int i = 0; i < encoded.length; i++) {
-                encoded[i] = codec.encode(normal.nextDouble());
-            }
-            final CorrelatorFactory correlatorFactory = new CorrelatorFactory(errorCorrelationType);
-            random = correlatorFactory.newCorrelator(new EncodedCube(h, w, n, encoded, codec), bias, errorCorrelationCoefficient);
-        } catch (Exception e) {
-            throw new OperatorException("Random numbers could not be initialized.", e);
-        }
-    }
-
-    private long anotherSeedNumber(String seedString, long seedNumber) {
-        if (seedString != null) {
-            for (final byte b : seedString.getBytes(StandardCharsets.US_ASCII)) {
-                seedNumber = 31 * seedNumber + Byte.toUnsignedLong(b);
-            }
-        }
-        if (sourceProduct.getStartTime() != null) {
-            seedNumber = 31 * seedNumber + Double.doubleToLongBits(sourceProduct.getStartTime().getMJD());
-        }
-        return seedNumber;
-    }
-
-    private void initializeUncertaintyModel() {
-        uncertaintyModel = new UncertaintyModelFactory(uncertaintyModelType).newUncertaintyModel();
-        final int coefficientCount = uncertaintyModel.getCoefficientCount();
-        coefficients = new double[measurandNames.length][coefficientCount];
-
-        if (uncertaintyModel.getCoefficientCount() > 0) {
-            final InputStream is;
-            if (uncertaintyModelCoefficientFile == null) {
-                is = SdrMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
-            } else {
-                try {
-                    is = new FileInputStream(uncertaintyModelCoefficientFile);
-                } catch (FileNotFoundException e) {
-                    throw new OperatorException("File not found.", e);
-                }
-            }
-            try (final Scanner scanner = new Scanner(is)) {
-                for (int i = 0; i < measurandNames.length; i++) {
-                    for (int j = 0; j < coefficientCount; j++) {
-                        coefficients[i][j] = scanner.nextDouble();
-                    }
-                }
-            } catch (InputMismatchException e) {
-                throw new OperatorException("Element does not comply with the required format.", e);
-            } catch (NoSuchElementException e) {
-                throw new OperatorException("Requested element does not exist.", e);
-            }
-        }
-    }
-
 
     /**
      * Configures a stack of samples with input data bands:
@@ -545,7 +485,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                 }
             } else {
                 // NEW: apply mutation
-                final double uncertainty = uncertaintyModel.getUncertainty(toaRefl, coefficients[i]);
+                final double uncertainty = toaUncertaintyModel.getUncertainty(toaRefl, toaCoefficients[i]);
 
                 // apply calibration
                 toaRefl = toaRefl / sensor.getCalCoeff()[i];

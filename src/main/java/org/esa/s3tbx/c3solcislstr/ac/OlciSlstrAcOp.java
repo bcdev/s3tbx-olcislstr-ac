@@ -115,22 +115,22 @@ public class OlciSlstrAcOp extends Operator {
     @Parameter(label = "Radiance error correlation",
             description = "The type of error correlation",
             defaultValue = "Constant", valueSet = {"None", "Constant"})
-    private String radErrorCorrelationType;
+    private String errorCorrelationType;
 
     @Parameter(label = "Radiance error correlation coefficient",
             description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
             defaultValue = "0.5", interval = "[0.0, 1.0]")
-    private double radErrorCorrelationCoefficient;
+    private double errorCorrelationCoefficient;
 
     @Parameter(label = "Use constant radiance bias",
             description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
             defaultValue = "true")
-    private boolean radUseConstantBias;
+    private boolean useConstantBias;
 
     @Parameter(label = "Radiance uncertainty model",
             description = "The type of uncertainty model",
             defaultValue = "Relative", valueSet = {"Poisson", "Relative"})
-    private String radUncertaintyModelType;
+    private String uncertaintyModelType;
 
 
     @Parameter(label = "CAMS repository",
@@ -194,7 +194,7 @@ public class OlciSlstrAcOp extends Operator {
         // generation of reflectances mutants...
         Product mutatedSourceProduct;
         if (mutant && mutateInputRefls) {
-            if (radUseConstantBias) {
+            if (useConstantBias) {
                 radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
             }
             mutatedSourceProduct = mutateInputReflectance(sourceProduct);
@@ -328,6 +328,51 @@ public class OlciSlstrAcOp extends Operator {
         return sdrOp.getTargetProduct();
     }
 
+    private Product processSdrMutated(Product sourceProduct, Product aotProduct) {
+        C3sSdrOlciSlstrMutantOp sdrMutantOp;
+        switch (sensor) {
+            case OLCI_SLSTR_S3A:
+            case OLCI_SLSTR_S3B:
+                sdrMutantOp = new C3sSdrOlciSlstrMutantOp();
+
+                break;
+            default:
+                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
+        }
+
+        sdrMutantOp.setParameterDefaultValues();
+        sdrMutantOp.setSourceProduct("sourceProduct", sourceProduct);
+        sdrMutantOp.setSourceProduct("aotProduct", aotProduct);
+        sdrMutantOp.setParameter("sensor", sensor);
+        sdrMutantOp.setParameter("computeSdrEverywhere", computeSdrEverywhere);
+        sdrMutantOp.setParameter("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
+
+        getPathToAtmosphericParametersLut(sdrMutantOp);
+
+        return sdrMutantOp.getTargetProduct();
+    }
+
+    private String getPathToAtmosphericParametersLut() {
+        String pathToLut = null;
+        switch (sensor) {
+            case OLCI_SLSTR_S3A:
+                final String olciALutName =
+                        pathToLut + File.separator + S3_A_OLCI_ATM_PARAMS_LUT_NAME;
+                final String slstrALutName =
+                        pathToLut + File.separator + S3_A_SLSTR_ATM_PARAMS_LUT_NAME;
+                break;
+            case OLCI_SLSTR_S3B:
+                final String olciBLutName =
+                        pathToLut + File.separator + S3_B_OLCI_ATM_PARAMS_LUT_NAME;
+                final String slstrBLutName =
+                        pathToLut + File.separator + S3_B_SLSTR_ATM_PARAMS_LUT_NAME;
+                break;
+            default:
+                throw new OperatorException("Sensor '" + sensor.getName() + "' not supported.");
+        }
+    }
+
+
     private Multivariate multivariate(String samplingType) {
         switch (samplingType) {
             case "Latin hypercube":
@@ -358,11 +403,11 @@ public class OlciSlstrAcOp extends Operator {
         map.put("seedNumber", pcg.nextLong());
         map.put("seedString", DATE_AND_TIME_OF_SOURCE);
         map.put("positiveDefinite", true);
-        map.put("errorCorrelationType", radErrorCorrelationType);
-        map.put("errorCorrelationCoefficient", radErrorCorrelationCoefficient);
-        map.put("useConstantBias", radUseConstantBias);
+        map.put("errorCorrelationType", errorCorrelationType);
+        map.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
+        map.put("useConstantBias", useConstantBias);
         map.put("bias", radBias);
-        map.put("uncertaintyModelType", radUncertaintyModelType);
+        map.put("uncertaintyModelType", uncertaintyModelType);
         map.put("measurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
         map.put("useUncertaintyModel", true);
         return map;
@@ -401,6 +446,25 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useUncertaintyModel", true);
         map.put("uncertaintyModelType", "Relative");
         map.put("measurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
+        return map;
+    }
+
+    @NotNull
+    private Map<String, Object> sdrMutantParameterMap() {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("rngType", MELG);
+        map.put("toaSeedNumber", pcg.nextLong());
+        map.put("sdrSeedNumber", pcg.nextLong());
+        map.put("seedString", DATE_AND_TIME_OF_SOURCE);
+        map.put("positiveDefinite", true);
+        map.put("errorCorrelationType", errorCorrelationType);
+        map.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
+        map.put("useConstantBias", useConstantBias);
+        map.put("bias", radBias);
+        map.put("uncertaintyModelType", uncertaintyModelType);
+        map.put("toaMmeasurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
+        map.put("sdrMmeasurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
+        map.put("useUncertaintyModel", true);
         return map;
     }
 
