@@ -5,6 +5,8 @@
 
 package org.esa.s3tbx.c3solcislstr.ac.aot.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,7 +33,7 @@ public class MyMaskColor implements Iterable<Color>, Iterator<Color> {
     }
 
     @Override
-    public Iterator<Color> iterator() {
+    public @NotNull Iterator<Color> iterator() {
         return this;
     }
 

@@ -11,12 +11,11 @@ import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
 import org.esa.snap.core.gpf.annotations.OperatorMetadata;
-import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
-import java.awt.Rectangle;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -30,13 +29,6 @@ import java.util.Map;
         copyright = "Copyright (C) 2010, 2018 by USwansea, Brockmann Consult",
         description = "Operator for OLCI/SLSTR AOT retrieval.")
 public class C3sAotOlciSlstrOp extends Operator {
-
-    @Parameter(defaultValue = "false", description = "Compute a cloud shadow")
-    private boolean computeCloudShadow;
-
-    @Parameter(defaultValue = "false", description = "Compute a cloud buffer")
-    private boolean computeCloudBuffer;
-
 
     @SourceProduct
     private Product sourceProduct;

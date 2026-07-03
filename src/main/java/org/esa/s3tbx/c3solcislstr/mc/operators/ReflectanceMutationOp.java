@@ -73,11 +73,6 @@ public class ReflectanceMutationOp extends PixelOperator {
             defaultValue = "true")
     private boolean positiveDefinite;
 
-    @Parameter(label = "Least positive value",
-            description = "Tiny number (not used, for compatibility with previous versions only).",
-            defaultValue = "1.0E-10")
-    private double tiny;
-
     @Parameter(label = "Error codec",
             description = "The type of error codec used",
             defaultValue = "Linear", valueSet = {"Laplace", "Linear", "Normal"})
@@ -198,11 +193,6 @@ public class ReflectanceMutationOp extends PixelOperator {
                 setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
             }
         }
-
-//        for (int i = 0; i < measurandNames.length; i++) {
-//            final double measurement = getSampleValue(sourceSamples[i], x, y);
-//            setSampleValue(targetSamples[i], measurement);
-//        }
     }
 
     private double getMutatedValue(double x, double u, double z) {
@@ -243,18 +233,6 @@ public class ReflectanceMutationOp extends PixelOperator {
             sample.set(value);
         }
     }
-
-//    @Override
-//    public void doExecute(ProgressMonitor pm) {
-//        try {
-//            initializeRandomNumbers();
-//        } catch (Exception e) {
-//            throw new OperatorException("Random noise could not be initialized.", e);
-//        }
-//        if (useUncertaintyModel) {
-//            initializeUncertaintyModel();
-//        }
-//    }
 
     private void initializeRandomNumbers() {
         try {
@@ -301,12 +279,10 @@ public class ReflectanceMutationOp extends PixelOperator {
             final InputStream is;
             if (uncertaintyModelCoefficientFile == null) {
                 is = ReflectanceMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
-            } else {
-                try {
-                    is = new FileInputStream(uncertaintyModelCoefficientFile);
-                } catch (FileNotFoundException e) {
-                    throw new OperatorException("File not found.", e);
-                }
+            } else try {
+                is = new FileInputStream(uncertaintyModelCoefficientFile);
+            } catch (FileNotFoundException e) {
+                throw new OperatorException("File not found.", e);
             }
             try (final Scanner scanner = new Scanner(is)) {
                 for (int i = 0; i < measurandNames.length; i++) {

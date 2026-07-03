@@ -22,6 +22,7 @@ import org.esa.s3tbx.c3solcislstr.mc.UniformVariate;
 import org.esa.s3tbx.c3solcislstr.mc.variates.AbstractRandomVariate;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -181,7 +182,7 @@ public final class Sobol implements Multivariate {
                 if (is == null) {
                     throw new IllegalStateException("The internal resource file could not be read.");
                 }
-                try (final Scanner scanner = new Scanner(is, "US-ASCII")) {
+                try (final Scanner scanner = new Scanner(is, StandardCharsets.US_ASCII)) {
                     scanner.nextLine();  // skip the header
                     while (scanner.hasNextLine()) {
                         final int d = scanner.nextInt();  // dimension

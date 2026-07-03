@@ -21,20 +21,18 @@ import org.esa.s3tbx.c3solcislstr.mc.RandomNumberGenerator;
 import org.esa.s3tbx.c3solcislstr.mc.UniformVariate;
 import org.esa.s3tbx.c3solcislstr.mc.variates.AbstractRandomVariate;
 
-/**
- * A maximally equidistributed F2-linear generator (MELG). This MELG is formally
- * designated 'MELG19937-64'. It has a state of 2,496 bytes and yields a 64-bit
- * output word.
- *
- * Further reading:
- *
- * S. Harase and T. Kimoto (2018).
- * Implementing 64-bit maximally equidistributed F2-linear generators with Mersenne prime period.
- * ACM Transactions on Mathematical Software, 44, 3, 30.
- * <http://doi.acm.org/10.1145/3159444>, <http://arxiv.org/abs/1505.06582>
- *
- * @author Ralf Quast
- */
+/// A maximally equidistributed F2-linear generator (MELG). This MELG is formally
+/// designated 'MELG19937-64'. It has a state of 2,496 bytes and yields a 64-bit
+/// output word.
+///
+/// Further reading:
+///
+/// S. Harase and T. Kimoto (2018).
+/// Implementing 64-bit maximally equidistributed F2-linear generators with Mersenne prime period.
+/// ACM Transactions on Mathematical Software, 44, 3, 30.
+/// <http://doi.acm.org/10.1145/3159444>, <<a href="http://arxiv.org/abs/1505.06582">...</a>>
+///
+/// @author Ralf Quast
 public final class Melg extends AbstractRandomVariate implements Multivariate, UniformVariate, RandomNumberGenerator {
 
     private static final int L = 19;

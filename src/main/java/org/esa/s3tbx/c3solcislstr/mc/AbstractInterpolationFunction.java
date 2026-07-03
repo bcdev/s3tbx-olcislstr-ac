@@ -33,10 +33,6 @@ abstract class AbstractInterpolationFunction implements InterpolationFunction {
         minY = Arrays.stream(y, 1, n).filter(i -> i < y[0]).min().orElse(y[0]);
     }
 
-    protected final int getN() {
-        return n;
-    }
-
     protected final double getX(int i) {
         return x[i];
     }

@@ -18,17 +18,38 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-public class MutantPreparator {
+/**
+ * Provides preparation steps and utility methods for MC mutations.
+ *
+ * @author olafd
+ */
+public class MutantProvider {
 
+    /**
+     * Provides a {@link Cube} of random numbers.
+     *
+     * @param sourceProduct:
+     * @param measurandNamesLength:
+     * @param seedNumber:
+     * @param seedString:
+     * @param rngType:
+     * @param useConstantBias:
+     * @param bias:
+     * @param errorCodecType:
+     * @param errorCorrelationType:
+     * @param errorCorrelationCoefficient:
+     *
+     * @return {@link Cube}
+     */
     public static Cube initializeRandomNumbers(Product sourceProduct,
-                                               String[] measurandNames, long seedNumber, String seedString,
+                                               int measurandNamesLength, long seedNumber, String seedString,
                                                String rngType, boolean useConstantBias, double bias,
                                                String errorCodecType, String errorCorrelationType,
                                                double errorCorrelationCoefficient) {
         try {
             final int h = sourceProduct.getSceneRasterHeight();
             final int w = sourceProduct.getSceneRasterWidth();
-            final int n = measurandNames.length;
+            final int n = measurandNamesLength;
 
             final long[] seeds = {seedNumber, anotherSeedNumber(sourceProduct, seedString, seedNumber)};
             final RandomVariate normal =
@@ -52,20 +73,36 @@ public class MutantPreparator {
         }
     }
 
+    /**
+     * Provides an {@link UncertaintyModel} to use for MC mutants.
+     *
+     * @param uncertaintyModelType typy of the {@link UncertaintyModel} ("Poisson" or "Relative")
+     *
+     * @return {@link UncertaintyModel}
+     */
     public static UncertaintyModel initializeUncertaintyModel(String uncertaintyModelType) {
         return new UncertaintyModelFactory(uncertaintyModelType).newUncertaintyModel();
     }
 
+    /**
+     * Initializes coefficients for an uncertainty model.
+     *
+     * @param uncertaintyModel The {@link UncertaintyModel} used.
+     * @param measurandNamesLength length of array of measurands to modify
+     * @param uncertaintyModelCoefficientFile file with uncertainty model coefficients
+     *
+     * @return double[][]
+     */
     public static double[][] initializeUncertaintyModelCoefficients(UncertaintyModel uncertaintyModel,
-                                                                    String[] measurandNames,
+                                                                    int measurandNamesLength,
                                                                     File uncertaintyModelCoefficientFile) {
         final int coefficientCount = uncertaintyModel.getCoefficientCount();
-        double[][] coefficients = new double[measurandNames.length][coefficientCount];
+        double[][] coefficients = new double[measurandNamesLength][coefficientCount];
 
         if (uncertaintyModel.getCoefficientCount() > 0) {
             final InputStream is;
             if (uncertaintyModelCoefficientFile == null) {
-                is = SdrMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
+                is = ReflectanceMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
             } else {
                 try {
                     is = new FileInputStream(uncertaintyModelCoefficientFile);
@@ -74,7 +111,7 @@ public class MutantPreparator {
                 }
             }
             try (final Scanner scanner = new Scanner(is)) {
-                for (int i = 0; i < measurandNames.length; i++) {
+                for (int i = 0; i < measurandNamesLength; i++) {
                     for (int j = 0; j < coefficientCount; j++) {
                         coefficients[i][j] = scanner.nextDouble();
                     }
@@ -91,6 +128,16 @@ public class MutantPreparator {
 
     }
 
+    /**
+     * Provides a mutated input value.
+     *
+     * @param x input value
+     * @param u uncertainty value provided by the model
+     * @param z Random numbers taken from the {@link Cube} associated with the {@link UncertaintyModel}.
+     * @param positiveDefinite if true, return value is positive definite
+     *
+     * @return the mutated value
+     */
     public static double getMutatedValue(double x, double u, double z, boolean positiveDefinite) {
         if (positiveDefinite) {
             return getMutatedValueLognormal(x, u, z);

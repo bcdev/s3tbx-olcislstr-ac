@@ -16,11 +16,7 @@
 
 package org.esa.s3tbx.c3solcislstr.ac.aot.lut;
 
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.Array;
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.IntervalPartition;
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.MultivariateLookupTable;
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.Remapped;
-import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.VectorLookupTable;
+import org.esa.s3tbx.c3solcislstr.ac.auxdata.lut.*;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;

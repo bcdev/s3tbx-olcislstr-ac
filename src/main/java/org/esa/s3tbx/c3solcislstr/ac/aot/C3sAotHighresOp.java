@@ -9,11 +9,7 @@ import com.bc.ceres.core.ProgressMonitor;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcUtils;
 import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.FlagCoding;
-import org.esa.snap.core.datamodel.Mask;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductNodeGroup;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
 import org.esa.snap.core.gpf.OperatorSpi;
@@ -26,7 +22,7 @@ import org.esa.snap.core.util.Guardian;
 import org.esa.snap.core.util.ProductUtils;
 import org.esa.snap.dataio.envisat.EnvisatConstants;
 
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
  * Operator for final AOT retrieval on original high-resolution grid.
@@ -179,7 +175,7 @@ public class C3sAotHighresOp extends Operator {
         Guardian.assertNotNull("sourceProduct", sourceProduct);
         Guardian.assertNotNull("targetProduct", targetProduct);
 
-        if (sourceBandName == null || sourceBandName.length() == 0) {
+        if (sourceBandName == null || sourceBandName.isEmpty()) {
             return null;
         }
         final Band sourceBand = sourceProduct.getBand(sourceBandName);

@@ -7,8 +7,6 @@ import org.esa.s3tbx.c3solcislstr.mc.generators.LatinHypercube;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Melg;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Pcg;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Sobol;
-import org.esa.s3tbx.c3solcislstr.mc.operators.ReflectanceMutationOp;
-import org.esa.s3tbx.c3solcislstr.mc.operators.SdrMutationOp;
 import org.esa.s3tbx.c3solcislstr.mc.variates.BoxMullerNormalVariate;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.RasterDataNode;
@@ -127,11 +125,6 @@ public class OlciSlstrAcOp extends Operator {
             defaultValue = "Relative", valueSet = {"Poisson", "Relative"})
     private String uncertaintyModelType;
 
-
-    @Parameter(label = "CAMS repository",
-            description = "Location of the CAMS aerosol product repository (or of a specific product file)",
-            notNull = true, notEmpty = true)
-    private File camsRepository;
 
     @Parameter(label = "CAMS regression coefficient",
             description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
@@ -266,10 +259,6 @@ public class OlciSlstrAcOp extends Operator {
         return GPF.createProduct(getName(C3sAotMasterOp.class), aerosolRetrievalParameterMap(), productSourceAot);
     }
 
-    private Product mutateInputReflectance(Product product) {
-        return GPF.createProduct(getName(ReflectanceMutationOp.class), inputReflMutationParameterMap(), product);
-    }
-
     private Product processSdr(Product sourceProduct, Product aotProduct) {
         Map<String, Product> sdrSourceProducts = new HashMap<>();
         sdrSourceProducts.put("sourceProduct", sourceProduct);
@@ -314,29 +303,8 @@ public class OlciSlstrAcOp extends Operator {
         return selector != 0;
     }
 
-    private Product mutateSurfaceReflectance(Product product) {
-        return GPF.createProduct(getName(SdrMutationOp.class), surfaceReflectanceMutationParameterMap(), product);
-    }
-
     private static String getName(Class<? extends Operator> operatorClass) {
         return OperatorSpi.getOperatorAlias(operatorClass);  // returns an alias or simple class name
-    }
-
-    @NotNull
-    private Map<String, Object> inputReflMutationParameterMap() {
-        final Map<String, Object> map = new HashMap<>();
-        map.put("rngType", MELG);
-        map.put("seedNumber", pcg.nextLong());
-        map.put("seedString", DATE_AND_TIME_OF_SOURCE);
-        map.put("positiveDefinite", true);
-        map.put("errorCorrelationType", errorCorrelationType);
-        map.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
-        map.put("useConstantBias", useConstantBias);
-        map.put("bias", radBias);
-        map.put("uncertaintyModelType", uncertaintyModelType);
-        map.put("measurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
-        map.put("useUncertaintyModel", true);
-        return map;
     }
 
     @NotNull
@@ -349,9 +317,9 @@ public class OlciSlstrAcOp extends Operator {
         map.put("mutant", mutant);
         map.put("mutateAot", mutateAot);
         map.put("rngType", MELG);
+        map.put("positiveDefinite", true);
         map.put("seedNumber", pcg.nextLong());
         map.put("seedString", DATE_AND_TIME_OF_PARENT);
-        map.put("repository", camsRepository);
         map.put("regressionCoefficient", camsRegressionCoefficient);
         map.put("regressionConstant", camsRegressionConstant);
         map.put("errorCorrelationType", camsErrorCorrelationType);
@@ -359,19 +327,6 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useConstantBias", camsUseConstantBias);
         map.put("bias", camsBias);
         map.put("uncertaintyModelType", camsUncertaintyModelType);
-        return map;
-    }
-
-    @NotNull
-    private Map<String, Object> surfaceReflectanceMutationParameterMap() {
-        final Map<String, Object> map = new HashMap<>();
-        map.put("rngType", MELG);
-        map.put("seedNumber", pcg.nextLong());
-        map.put("seedString", DATE_AND_TIME_OF_SOURCE);
-        map.put("positiveDefinite", true);
-        map.put("useUncertaintyModel", true);
-        map.put("uncertaintyModelType", "Relative");
-        map.put("measurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
         return map;
     }
 

@@ -166,34 +166,6 @@ public class IntervalPartition {
         return monotonicity > 0 ? sequence[sequence.length - 1] : sequence[0];
     }
 
-    /**
-     * Returns the minimum (i.e. first) number in the partition.
-     *
-     * @return the minimum number in the partition.
-     */
-    public final double getMin() {
-        return monotonicity > 0 ? sequence[0] : sequence[sequence.length - 1];
-    }
-
-    /**
-     * Returns the mesh of the interval partition, i.e. the maximum
-     * distance between two adjacent real numbers in the partition.
-     *
-     * @return the mesh.
-     */
-    public final double getMesh() {
-        double mesh = 0.0;
-
-        for (int i = 1; i < sequence.length; ++i) {
-            final double length = Math.abs(sequence[i] - sequence[i - 1]);
-            if (length > mesh) {
-                mesh = length;
-            }
-        }
-
-        return mesh;
-    }
-
     private static int ensureStrictMonotonicity(final Array sequence) throws IllegalArgumentException {
         int monotonicity = 0;
         for (int i = 1; i < sequence.getLength(); ++i) {

@@ -98,17 +98,17 @@ public interface Array {
         }
 
         @Override
-        public final int getLength() {
+        public int getLength() {
             return values.length;
         }
 
         @Override
-        public final double getValue(int i) {
+        public double getValue(int i) {
             return values[i];
         }
 
         @Override
-        public final void getValues(int start, double[] slice) {
+        public void getValues(int start, double[] slice) {
             System.arraycopy(this.values, start, slice, 0, slice.length);
         }
 
@@ -157,17 +157,17 @@ public interface Array {
         }
 
         @Override
-        public final int getLength() {
+        public int getLength() {
             return values.length;
         }
 
         @Override
-        public final double getValue(int i) {
+        public double getValue(int i) {
             return values[i];
         }
 
         @Override
-        public final void getValues(int start, double[] slice) {
+        public void getValues(int start, double[] slice) {
             for (int i = 0; i < slice.length; ++i) {
                 slice[i] = values[start + i];
             }

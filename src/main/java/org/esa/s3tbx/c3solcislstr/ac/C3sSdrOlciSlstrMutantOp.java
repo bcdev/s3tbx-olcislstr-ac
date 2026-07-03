@@ -248,32 +248,32 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
     private void prepareMcMutations() {
         if (mutateToa || mutateSdr) {
-            reflUncertaintyModel = MutantPreparator.initializeUncertaintyModel(uncertaintyModelType);
+            reflUncertaintyModel = MutantProvider.initializeUncertaintyModel(uncertaintyModelType);
         }
         if (mutateToa) {
             try {
-                toaRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, toaMeasurandNames,
+                toaRandom = MutantProvider.initializeRandomNumbers(sourceProduct, toaMeasurandNames.length,
                         toaSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
                         errorCorrelationType, errorCorrelationCoefficient);
             } catch (Exception e) {
                 throw new OperatorException("Random noise for TOA could not be initialized.", e);
             }
 
-            toaCoefficients = MutantPreparator.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
-                    toaMeasurandNames, uncertaintyModelCoefficientFile);
+            toaCoefficients = MutantProvider.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
+                    toaMeasurandNames.length, uncertaintyModelCoefficientFile);
         }
 
         if (mutateSdr) {
             try {
-                sdrRandom = MutantPreparator.initializeRandomNumbers(sourceProduct, sdrMeasurandNames,
+                sdrRandom = MutantProvider.initializeRandomNumbers(sourceProduct, sdrMeasurandNames.length,
                         sdrSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
                         errorCorrelationType, errorCorrelationCoefficient);
             } catch (Exception e) {
                 throw new OperatorException("Random noise for SDR could not be initialized.", e);
             }
 
-            sdrCoefficients = MutantPreparator.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
-                    sdrMeasurandNames, uncertaintyModelCoefficientFile);
+            sdrCoefficients = MutantProvider.initializeUncertaintyModelCoefficients(reflUncertaintyModel,
+                    sdrMeasurandNames.length, uncertaintyModelCoefficientFile);
         }
     }
 
@@ -522,7 +522,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                 // NEW: apply mutation
                 if (mutateToa) {
                     final double toaUncertainty = reflUncertaintyModel.getUncertainty(toaRefl, toaCoefficients[i]);
-                    toaRefl = MutantPreparator.getMutatedValue(toaRefl, toaUncertainty, z[i], positiveDefinite);
+                    toaRefl = MutantProvider.getMutatedValue(toaRefl, toaUncertainty, z[i], positiveDefinite);
                 }
 
                 // apply calibration
@@ -563,7 +563,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                 // MC mutation:
                 if (mutateSdr) {
                     final double sdrUncertainty = sdrUncertaintyModel.getUncertainty(sdr, sdrCoefficients[i]);
-                    sdr = MutantPreparator.getMutatedValue(sdr, sdrUncertainty, z[i], positiveDefinite);
+                    sdr = MutantProvider.getMutatedValue(sdr, sdrUncertainty, z[i], positiveDefinite);
                 }
 
                 targetSamples[counter].set(sdr);

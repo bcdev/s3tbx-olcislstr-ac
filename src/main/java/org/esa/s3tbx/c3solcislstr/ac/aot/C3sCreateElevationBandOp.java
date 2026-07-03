@@ -15,12 +15,7 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
 import com.bc.ceres.core.ProgressMonitor;
-import org.esa.snap.core.datamodel.Band;
-import org.esa.snap.core.datamodel.GeoCoding;
-import org.esa.snap.core.datamodel.GeoPos;
-import org.esa.snap.core.datamodel.PixelPos;
-import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
+import org.esa.snap.core.datamodel.*;
 import org.esa.snap.core.dataop.dem.ElevationModel;
 import org.esa.snap.core.dataop.dem.ElevationModelDescriptor;
 import org.esa.snap.core.dataop.dem.ElevationModelRegistry;
@@ -34,7 +29,7 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.util.ProductUtils;
 
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
  * Operator that creates the one and only elevation band
@@ -50,9 +45,6 @@ public class C3sCreateElevationBandOp extends Operator {
 
     @SourceProduct
     private Product sourceProduct;
-
-    @TargetProduct
-    private Product targetProduct;
 
     private ElevationModel dem;
     private float noDataValue;
@@ -70,7 +62,7 @@ public class C3sCreateElevationBandOp extends Operator {
         final int rasterWidth = sourceProduct.getSceneRasterWidth();
         final int rasterHeight = sourceProduct.getSceneRasterHeight();
         geoCoding = sourceProduct.getSceneGeoCoding();
-        targetProduct = new Product("Elevation Product", "Elevation", rasterWidth, rasterHeight);
+        Product targetProduct = new Product("Elevation Product", "Elevation", rasterWidth, rasterHeight);
         targetProduct.setDescription("Elevation for " + sourceProduct.getName());
         ProductUtils.copyTiePointGrids(sourceProduct, targetProduct);
         ProductUtils.copyGeoCoding(sourceProduct, targetProduct);

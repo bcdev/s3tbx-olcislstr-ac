@@ -41,25 +41,9 @@ public final class Pcg extends AbstractRandomVariate implements Multivariate, Un
      */
     private long increment;
 
-    /**
-     * Creates a new instance of this class.
-     */
-    public Pcg() {
-        init();
-    }
-
     private void init() {
         state = 0x853c49e6748fea9bL;
         increment = 0xda3e39cb94b95bdbL;
-    }
-
-    /**
-     * Creates a new instance of this class.
-     *
-     * @param selector The stream selector.
-     */
-    public Pcg(long selector) {
-        init(selector);
     }
 
     private void init(long selector) {

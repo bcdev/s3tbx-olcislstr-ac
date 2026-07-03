@@ -21,7 +21,6 @@ import javax.media.jai.JAI;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.RenderedOp;
 import java.awt.*;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,14 +69,6 @@ public class C3sAotMasterOp extends Operator {
             description = "Constant AOT value which is used if the retrieval is skipped")
     private float constantAotValue;
 
-    @Parameter(defaultValue = "true",
-            label = " Compute cloud shadow")
-    private boolean computeCloudShadow;
-
-    @Parameter(defaultValue = "true",
-            label = "Compute cloud buffer")
-    private boolean computeCloudBuffer;
-
 
     @Parameter(defaultValue = "false",
             label = "Copy cloud top pressure")
@@ -116,20 +107,9 @@ public class C3sAotMasterOp extends Operator {
     private String seedString;
 
     @Parameter(label = "Positive definite",
-            description = "If checked, the aerosol optical depth is considered positive definite.",
+            description = "If checked, the measurand is considered positive definite (like, e.g., radiance, reflectance or brightness temperature).",
             defaultValue = "true")
     private boolean positiveDefinite;
-
-    @Parameter(label = "Least positive value",
-            description = "Tiny number, used if an aerosol optical depth is zero " +
-                    "(e.g., due to discretization) even though it is considered positive definite.",
-            defaultValue = "1.0E-10")
-    private double tiny;
-
-    @Parameter(label = "CAMS repository",
-            description = "Location of the CAMS aerosol product repository (or of a specific product file)",
-            notNull = true, notEmpty = true)
-    private File repository;
 
     @Parameter(label = "Regression coefficient",
             description = "The regression coefficient (see score summary " +
@@ -289,6 +269,7 @@ public class C3sAotMasterOp extends Operator {
         mutantParams.put("rngType", rngType);
         mutantParams.put("seedNumber", seedNumber);
         mutantParams.put("seedString", seedString);
+        mutantParams.put("positiveDefinite", positiveDefinite);
         mutantParams.put("regressionCoefficient", regressionCoefficient);
         mutantParams.put("regressionConstant", regressionConstant);
         mutantParams.put("errorCorrelationType", errorCorrelationType);
