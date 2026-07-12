@@ -356,9 +356,7 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useConstantBias", useConstantBias);
         map.put("bias", radBias);
         map.put("uncertaintyModelType", uncertaintyModelType);
-        map.put("toaMmeasurandNames", OLCI_SLSTR_TOA_BAND_NAMES);
-        map.put("sdrMmeasurandNames", OLCI_SLSTR_SDR_BAND_NAMES);
-        map.put("mutateToa", mutateSdr);
+        map.put("mutateToa", mutateToa);
         map.put("mutateSdr", mutateSdr);
 
         return map;

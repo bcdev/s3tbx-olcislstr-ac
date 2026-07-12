@@ -1,5 +1,6 @@
 org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.C3sSdrOlciSlstrOp$Spi
+org.esa.s3tbx.c3solcislstr.ac.C3sSdrOlciSlstrMutantOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMutantOp$Spi
 org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotOlciSlstrOp$Spi

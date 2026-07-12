@@ -122,9 +122,12 @@ public class MutantProvider {
             } catch (NoSuchElementException e) {
                 throw new OperatorException("Requested element does not exist.", e);
             }
-        } else {
-            throw new OperatorException("Cannot initialize coefficients for uncertainty model. Please check.");
         }
+
+        return coefficients;
+//        else {
+//            throw new OperatorException("Cannot initialize coefficients for uncertainty model. Please check.");
+//        }
 
     }
 
