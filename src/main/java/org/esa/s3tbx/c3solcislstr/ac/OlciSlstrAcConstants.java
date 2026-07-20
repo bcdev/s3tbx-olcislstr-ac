@@ -78,6 +78,20 @@ public class OlciSlstrAcConstants {
             "S1_reflectance_an", "S2_reflectance_an", "S3_reflectance_an",
             "S4_reflectance_an", "S5_reflectance_an", "S6_reflectance_an"};
 
+    static final String[] OLCI_TOA_RAD_BAND_NAMES = new String[]{
+            "Oa01_radiance", "Oa02_radiance", "Oa03_radiance", "Oa04_radiance", "Oa05_radiance", "Oa06_radiance",
+            "Oa07_radiance", "Oa08_radiance", "Oa09_radiance", "Oa10_radiance", "Oa11_radiance", "Oa12_radiance",
+            "Oa13_radiance", "Oa14_radiance", "Oa15_radiance", "Oa16_radiance", "Oa17_radiance", "Oa18_radiance",
+            "Oa19_radiance", "Oa20_radiance", "Oa21_radiance"
+    };
+
+    static final String[] OLCI_TOA_RAD_UNC_BAND_NAMES = new String[]{
+            "Oa01_radiance_unc", "Oa02_radiance_unc", "Oa03_radiance_unc", "Oa04_radiance_unc", "Oa05_radiance_unc", "Oa06_radiance_unc",
+            "Oa07_radiance_unc", "Oa08_radiance_unc", "Oa09_radiance_unc", "Oa10_radiance_unc", "Oa11_radiance_unc", "Oa12_radiance_unc",
+            "Oa13_radiance_unc", "Oa14_radiance_unc", "Oa15_radiance_unc", "Oa16_radiance_unc", "Oa17_radiance_unc", "Oa18_radiance_unc",
+            "Oa19_radiance_unc", "Oa20_radiance_unc", "Oa21_radiance_unc"
+    };
+
     final static String[] OLCI_SLSTR_TOA_BAND_NAMES = new String[]{
             "Oa01_reflectance", "Oa02_reflectance", "Oa03_reflectance", "Oa04_reflectance", "Oa05_reflectance",
             "Oa06_reflectance", "Oa07_reflectance", "Oa08_reflectance", "Oa09_reflectance", "Oa10_reflectance",
@@ -129,7 +143,11 @@ public class OlciSlstrAcConstants {
             "Oa16_reflectance", "Oa17_reflectance", "Oa18_reflectance", "Oa19_reflectance", "Oa20_reflectance",
             "Oa21_reflectance"};
 
-    final static String[] OLCI_SLSTR_TOA_BAND_NAMES_SLSTR_NADIR = new String[]{
+    final static String[] SLSTR_TOA_RAD_BAND_NAMES = new String[]{
+            "S1_radiance_an", "S2_radiance_an", "S3_radiance_an",
+            "S4_radiance_an", "S5_radiance_an", "S6_radiance_an"};
+
+    final static String[] SLSTR_TOA_REFL_BAND_NAMES = new String[]{
             "S1_reflectance_an", "S2_reflectance_an", "S3_reflectance_an",
             "S4_reflectance_an", "S5_reflectance_an", "S6_reflectance_an"};
 
@@ -142,12 +160,6 @@ public class OlciSlstrAcConstants {
             "sdr_error_Sl01", "sdr_error_Sl02", "sdr_error_Sl03",
             "sdr_error_Sl05", "sdr_error_Sl06"};
 
-    final static String[] OLCI_UNC_BAND_NAMES = new String[]{
-            "Oa01_radiance_unc", "Oa02_radiance_unc", "Oa03_radiance_unc", "Oa04_radiance_unc", "Oa05_radiance_unc", "Oa06_radiance_unc",
-            "Oa07_radiance_unc", "Oa08_radiance_unc", "Oa09_radiance_unc", "Oa10_radiance_unc", "Oa11_radiance_unc", "Oa12_radiance_unc",
-            "Oa13_radiance_unc", "Oa14_radiance_unc", "Oa15_radiance_unc", "Oa16_radiance_unc", "Oa17_radiance_unc", "Oa18_radiance_unc",
-            "Oa19_radiance_unc", "Oa20_radiance_unc", "Oa21_radiance_unc"
-    };
 
     final static String DATE_AND_TIME_OF_PARENT = "";
     final static String DATE_AND_TIME_OF_SOURCE = "";

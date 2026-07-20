@@ -102,7 +102,7 @@ public class MutantProvider {
         if (uncertaintyModel.getCoefficientCount() > 0) {
             final InputStream is;
             if (uncertaintyModelCoefficientFile == null) {
-                is = ReflectanceMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
+                is = ToaL1bMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
             } else {
                 try {
                     is = new FileInputStream(uncertaintyModelCoefficientFile);

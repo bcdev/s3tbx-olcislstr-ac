@@ -46,13 +46,13 @@ import java.util.Scanner;
  *
  * @author Ralf Quast
  */
-@OperatorMetadata(alias = "ReflectanceMutator",
+@OperatorMetadata(alias = "ToaL1bMutator",
         category = "OLCI",
         version = "0.1",
         authors = "Ralf Quast",
         copyright = "(c) 2020 by Brockmann Consult",
         description = "Adds Gaussian noise to measurement values (i.e. spectral radiance). For use in Monte Carlo simulations.")
-public class ReflectanceMutationOp extends PixelOperator {
+public class ToaL1bMutationOp extends PixelOperator {
 
     @Parameter(label = "Random number generator",
             description = "The type of random number generator",
@@ -278,7 +278,7 @@ public class ReflectanceMutationOp extends PixelOperator {
         if (uncertaintyModel.getCoefficientCount() > 0) {
             final InputStream is;
             if (uncertaintyModelCoefficientFile == null) {
-                is = ReflectanceMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
+                is = ToaL1bMutationOp.class.getResourceAsStream("olci_radiometry_uncertainty_model_coefficients.dat");
             } else try {
                 is = new FileInputStream(uncertaintyModelCoefficientFile);
             } catch (FileNotFoundException e) {
@@ -330,7 +330,7 @@ public class ReflectanceMutationOp extends PixelOperator {
 
     public static class Spi extends OperatorSpi {
         public Spi() {
-            super(ReflectanceMutationOp.class);
+            super(ToaL1bMutationOp.class);
         }
     }
 }
