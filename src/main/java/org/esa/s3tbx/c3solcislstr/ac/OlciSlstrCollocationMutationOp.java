@@ -127,12 +127,11 @@ public class OlciSlstrCollocationMutationOp extends Operator {
     private Multivariate mv;
     private boolean mutant;
 
-    private S3OlciSlstrSensor sensor;
     private double radBias = 0.0;
 
     @Override
     public void initialize() throws OperatorException {
-        sensor = determineSensor(sourceProduct);
+        validateInput(sourceProduct);
 
         pcg = new Pcg(seed, selector);
         mv = multivariate(samplingType);
@@ -152,11 +151,11 @@ public class OlciSlstrCollocationMutationOp extends Operator {
             }
             mutatedCollocationProduct = mutateOlciRadiance(sourceProduct);
             mutatedSlstrProduct = mutateSlstrRadiance(sourceProduct);
-            for (int i=0; i< SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
+            for (int i = 0; i < SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
                 final Band origSlstrBand = mutatedCollocationProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
                 final Band mutatedSlstrBand = mutatedSlstrProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
                 if (!mutatedCollocationProduct.containsBand(mutatedSlstrBand.getName())) {
-                    ProductUtils.copyBand(mutatedSlstrBand.getName(),mutatedSlstrProduct, mutatedCollocationProduct, true);
+                    ProductUtils.copyBand(mutatedSlstrBand.getName(), mutatedSlstrProduct, mutatedCollocationProduct, true);
                 }
             }
         } else {
@@ -166,10 +165,10 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         setTargetProduct(mutatedCollocationProduct);
 
         if (copyGeometryBands) {
-            for (String geomBandNameOlci : sensor.getGeomBandNamesOlci()) {
+            for (String geomBandNameOlci : S3OlciSlstrSensor.OLCI_SLSTR_S3A.getGeomBandNamesOlci()) {
                 copySourceBands(geomBandNameOlci);
             }
-            for (String geomBandNameSlstr : sensor.getGeomBandNamesSlstrNadir()) {
+            for (String geomBandNameSlstr : S3OlciSlstrSensor.OLCI_SLSTR_S3A.getGeomBandNamesSlstrNadir()) {
                 copySourceBands(geomBandNameSlstr);
             }
         }
@@ -187,19 +186,21 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         }
     }
 
-    private S3OlciSlstrSensor determineSensor(Product l1bProduct) {
-        if (l1bProduct.getName().contains("SY_1_")) {
-            if (l1bProduct.getName().startsWith("S3A_SY_1_SYN")) {
-                return S3OlciSlstrSensor.OLCI_SLSTR_S3A;
-            } else {
-                return S3OlciSlstrSensor.OLCI_SLSTR_S3B;
+    private void validateInput(Product collocatedProduct) {
+        for (int i = 0; i < OLCI_TOA_RAD_BAND_NAMES.length; i++) {
+            if (!collocatedProduct.containsBand(OLCI_TOA_RAD_BAND_NAMES[i])) {
+                throw new OperatorException(String.format("OLCI band '%s' missing in collocation product '%s'.",
+                        OLCI_TOA_RAD_BAND_NAMES[i], collocatedProduct.getName()));
             }
-        } else {
-            throw new OperatorException(String.format("Product of type '%s' not supported.",
-                    l1bProduct.getProductType()));
+        }
+
+        for (int i = 0; i < SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
+            if (!collocatedProduct.containsBand(SLSTR_TOA_RAD_BAND_NAMES[i])) {
+                throw new OperatorException(String.format("SLSTR band '%s' missing in collocation product '%s'.",
+                        SLSTR_TOA_RAD_BAND_NAMES[i], collocatedProduct.getName()));
+            }
         }
     }
-
 
     private Multivariate multivariate(String samplingType) {
         switch (samplingType) {

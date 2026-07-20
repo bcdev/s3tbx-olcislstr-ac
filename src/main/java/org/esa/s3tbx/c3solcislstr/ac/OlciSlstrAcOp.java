@@ -84,6 +84,11 @@ public class OlciSlstrAcOp extends Operator {
     @Parameter(description = "Path to atmospheric parameter LUTs.")
     private String pathToAtmosphericParameterLuts;
 
+    @Parameter(description = "The Sentinel platform (S3A or S3B).",
+            label = "The Sentinel platform (S3A or S3B)",
+            valueSet = {"S3A", "S3B"}, defaultValue = "S3A")
+    private String platform;
+
 
     @Parameter(label = "Seed number",
             description = "A numeric value to seed the random number generator",
@@ -173,7 +178,12 @@ public class OlciSlstrAcOp extends Operator {
 
     @Override
     public void initialize() throws OperatorException {
-        sensor = determineSensor(sourceProduct);
+
+        if (platform == null) {
+            throw new OperatorException("Parameter 'platform' not specified. Select either 'S3A' or S3B'.");
+        }
+
+        sensor = platform.equals("S3A") ? S3OlciSlstrSensor.OLCI_SLSTR_S3A : S3OlciSlstrSensor.OLCI_SLSTR_S3B;
 
         pcg = new Pcg(seed, selector);
         mv = multivariate(samplingType);
@@ -239,19 +249,6 @@ public class OlciSlstrAcOp extends Operator {
             if (rasterDataNodeOlci != null) {
                 ProductUtils.copyTiePointGrid(geomBandNameOlci, sourceProduct, getTargetProduct());
             }
-        }
-    }
-
-    private S3OlciSlstrSensor determineSensor(Product l1bProduct) {
-        if (l1bProduct.getName().contains("SY_1_")) {
-            if (l1bProduct.getName().startsWith("S3A_SY_1_SYN")) {
-                return S3OlciSlstrSensor.OLCI_SLSTR_S3A;
-            } else {
-                return S3OlciSlstrSensor.OLCI_SLSTR_S3B;
-            }
-        } else {
-            throw new OperatorException(String.format("Product of type '%s' not supported.",
-                    l1bProduct.getProductType()));
         }
     }
 

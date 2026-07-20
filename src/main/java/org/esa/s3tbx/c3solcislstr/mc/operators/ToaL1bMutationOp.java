@@ -173,6 +173,7 @@ public class ToaL1bMutationOp extends PixelOperator {
         }
         c.copyGeoCoding();
         c.copyMasks();
+        c.copyMetadata();
         c.getTargetProduct().setAutoGrouping(c.getSourceProduct().getAutoGrouping());
     }
 
