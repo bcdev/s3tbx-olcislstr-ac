@@ -1,10 +1,8 @@
 package org.esa.s3tbx.c3solcislstr.ac.aot;
 
-import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.ac.S3OlciSlstrSensor;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
-import org.esa.snap.core.datamodel.ProductData;
 import org.esa.snap.core.gpf.GPF;
 import org.esa.snap.core.gpf.Operator;
 import org.esa.snap.core.gpf.OperatorException;
@@ -15,11 +13,7 @@ import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.annotations.TargetProduct;
 import org.esa.snap.core.image.ImageManager;
 import org.esa.snap.core.util.ProductUtils;
-import org.jspecify.annotations.NonNull;
 
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.RenderedOp;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,15 +54,9 @@ public class C3sAotMasterOp extends Operator {
     @Parameter(defaultValue = "0.3")
     private float ndviThr;
 
-    @Parameter(defaultValue = "false",
+    @Parameter(defaultValue = "true",
             label = " If set, AOT retrieval is skipped and a constant value shall be used in AC")
     private boolean useConstantAot;
-
-    @Parameter(defaultValue = "0.15",
-            label = " Constant AOT value",
-            description = "Constant AOT value which is used if the retrieval is skipped")
-    private float constantAotValue;
-
 
     @Parameter(defaultValue = "false",
             label = "Copy cloud top pressure")
@@ -79,81 +67,6 @@ public class C3sAotMasterOp extends Operator {
     private boolean computeAotEverywhere;
 
 
-    /// MC related parameters...
-    @Parameter(label = "Mutant",
-            description = "If checked, the aerosol product is mutated randomly.",
-            defaultValue = "true")
-    private boolean mutant;
-
-    @Parameter(defaultValue = "true",
-            label = "Apply mutation on input reflectances",
-            description = "If set, AOT is mutated ")
-    private boolean mutateAot;
-
-    @Parameter(label = "Random number generator",
-            description = "The type of random number generator",
-            defaultValue = "MELG", valueSet = {"MELG", "PCG"})
-    private String rngType;
-
-    @Parameter(label = "Seed number",
-            description = "A numeric value to seed the random number generator",
-            defaultValue = "5489")
-    private long seedNumber;
-
-    @Parameter(label = "Seed string",
-            description = "An alphanumeric value to seed the random number generator " +
-                    "(US-ASCII character set). If empty, the seed value is determined " +
-                    "by the date and time associated with the CAMS parent product.")
-    private String seedString;
-
-    @Parameter(label = "Positive definite",
-            description = "If checked, the measurand is considered positive definite (like, e.g., radiance, reflectance or brightness temperature).",
-            defaultValue = "true")
-    private boolean positiveDefinite;
-
-    @Parameter(label = "Regression coefficient",
-            description = "The regression coefficient (see score summary " +
-                    "statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "1.0")
-    private double regressionCoefficient;
-
-    @Parameter(label = "Regression constant",
-            description = "The regression constant (see score summary " +
-                    "statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "0.0")
-    private double regressionConstant;
-
-    @Parameter(label = "Error correlation",
-            description = "The type of error correlation",
-            defaultValue = "None", valueSet = {"None", "Constant"})
-    private String errorCorrelationType;
-
-    @Parameter(label = "Error correlation coefficient",
-            description = "The error correlation coefficient (used to generate a " +
-                    "sequence of correlated random numbers).",
-            defaultValue = "0.0", interval = "[0.0, 1.0]")
-    private double errorCorrelationCoefficient;
-
-    @Parameter(label = "Use constant bias",
-            description = "If checked, all random numbers are correlated with a " +
-                    "constant bias rather than a random bias (using the specified " +
-                    "error correlation coefficient).",
-            defaultValue = "false")
-    private boolean useConstantBias;
-
-    @Parameter(label = "Constant bias",
-            description = "A constant bias value, which must be a draw from a standard normal distribution.",
-            defaultValue = "0.0")
-    private double bias;
-
-    @Parameter(label = "CAMS uncertainty model",
-            description = "The type of uncertainty model",
-            defaultValue = "CAMS AOD (2020)",
-            valueSet = {"CAMS AOD (2020)", "Relative (10%)", "Relative (15%)", "Relative (20%)"})
-    private String uncertaintyModelType;
-
-    /// end MC related parameters
-
     @SourceProduct
     private Product sourceProduct;
 
@@ -161,7 +74,6 @@ public class C3sAotMasterOp extends Operator {
     private Product targetProduct;
 
     public static final Product EMPTY_PRODUCT = new Product("empty", "empty", 0, 0);
-    private Product mergedAotProduct;
 
     @Override
     public void initialize() throws OperatorException {
@@ -169,6 +81,12 @@ public class C3sAotMasterOp extends Operator {
             setTargetProduct(EMPTY_PRODUCT);
             return;
         }
+
+        if (useConstantAot) {
+            setTargetProduct(EMPTY_PRODUCT);
+            return;
+        }
+
         Dimension targetTS = ImageManager.getPreferredTileSize(sourceProduct);
         RenderingHints rhTarget = new RenderingHints(GPF.KEY_TILE_SIZE, targetTS);
 
@@ -184,26 +102,6 @@ public class C3sAotMasterOp extends Operator {
         }
         if (reflProduct == EMPTY_PRODUCT) {
             setTargetProduct(EMPTY_PRODUCT);
-            return;
-        }
-
-        if (useConstantAot) {
-            Band aotBand = reflProduct.addBand("aot", ProductData.TYPE_FLOAT32);
-            Band aotErrBand = reflProduct.addBand("aot_err", ProductData.TYPE_FLOAT32);
-
-            ParameterBlockJAI pb = new ParameterBlockJAI("constant");
-            pb.setParameter("width", (float) sourceProduct.getSceneRasterWidth());
-            pb.setParameter("height", (float) sourceProduct.getSceneRasterHeight());
-
-            pb.setParameter("bandvalues", new Float[]{constantAotValue});
-            RenderedOp constImageAot = JAI.create("constant", pb);
-            aotBand.setSourceImage(constImageAot);
-
-            pb.setParameter("bandvalues", new Float[]{0.0f});
-            RenderedOp constImageAotErr = JAI.create("constant", pb);
-            aotErrBand.setSourceImage(constImageAotErr);
-
-            setTargetProduct(reflProduct);
             return;
         }
 
@@ -241,44 +139,12 @@ public class C3sAotMasterOp extends Operator {
             final String aotHighresOpAlias = OperatorSpi.getOperatorAlias(C3sAotHighresOp.class);
             Product aotHiresProduct = GPF.createProduct(aotHighresOpAlias, sclParams, upsclProducts, rhTarget);
 
-            mergedAotProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
+            Product mergedAotProduct = mergeToTargetProduct(reflProduct, aotHiresProduct);
             ProductUtils.copyPreferredTileSize(reflProduct, mergedAotProduct);
             aotFinalProduct = mergedAotProduct;
         }
 
-        if (mutant && mutateAot) {
-            Map<String, Product> mutantProducts = new HashMap<>();
-            mutantProducts.put("sourceProduct", mergedAotProduct);
-
-            final Map<String, Object> mutantParams = getAotMutantParamsMap();
-
-            final Product aotMutantProduct = GPF.createProduct(OperatorSpi.getOperatorAlias(C3sAotMutantOp.class),
-                    mutantParams, mutantProducts, rhTarget);
-
-            Band aotOrigBand = aotFinalProduct.getBand(OlciSlstrAcConstants.AOT_BAND_NAME);
-            aotFinalProduct.removeBand(aotOrigBand);
-            ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotMutantProduct, aotFinalProduct, true);
-        }
-
         setTargetProduct(aotFinalProduct);
-    }
-
-    private @NonNull Map<String, Object> getAotMutantParamsMap() {
-        Map<String, Object> mutantParams = new HashMap<>();
-        mutantParams.put("mutant", mutant);
-        mutantParams.put("rngType", rngType);
-        mutantParams.put("seedNumber", seedNumber);
-        mutantParams.put("seedString", seedString);
-        mutantParams.put("positiveDefinite", positiveDefinite);
-        mutantParams.put("regressionCoefficient", regressionCoefficient);
-        mutantParams.put("regressionConstant", regressionConstant);
-        mutantParams.put("errorCorrelationType", errorCorrelationType);
-        mutantParams.put("errorCorrelationCoefficient", errorCorrelationCoefficient);
-        mutantParams.put("useConstantBias", useConstantBias);
-        mutantParams.put("bias", bias);
-        mutantParams.put("uncertaintyModelType", uncertaintyModelType);
-
-        return mutantParams;
     }
 
     private Product mergeToTargetProduct(Product reflProduct, Product aotHiresProduct) {

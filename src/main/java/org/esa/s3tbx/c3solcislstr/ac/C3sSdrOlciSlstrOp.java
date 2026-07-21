@@ -1,5 +1,6 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
+import org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
@@ -12,12 +13,7 @@ import org.esa.snap.core.gpf.annotations.OperatorMetadata;
 import org.esa.snap.core.gpf.annotations.Parameter;
 import org.esa.snap.core.gpf.annotations.SourceProduct;
 import org.esa.snap.core.gpf.common.BandMathsOp;
-import org.esa.snap.core.gpf.pointop.PixelOperator;
-import org.esa.snap.core.gpf.pointop.ProductConfigurer;
-import org.esa.snap.core.gpf.pointop.Sample;
-import org.esa.snap.core.gpf.pointop.SourceSampleConfigurer;
-import org.esa.snap.core.gpf.pointop.TargetSampleConfigurer;
-import org.esa.snap.core.gpf.pointop.WritableSample;
+import org.esa.snap.core.gpf.pointop.*;
 import org.esa.snap.core.util.ProductUtils;
 
 import java.io.File;
@@ -36,7 +32,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
     @SourceProduct
     private Product sourceProduct;
 
-    @SourceProduct
+    @SourceProduct(optional = true)
     private Product aotProduct;
 
     @SourceProduct(alias = "reflectance", optional = true)
@@ -52,6 +48,11 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
     @Parameter(defaultValue = "false",
             description = " If set, SDR are computed everywhere (brute force, ignores clouds etc.)")
     boolean computeSdrEverywhere;
+
+    @Parameter(defaultValue = "0.15",
+            label = " Constant AOT value",
+            description = "Constant AOT value which is used if the retrieval is skipped")
+    private float constantAotValue;
 
     //todo add description
     @Parameter
@@ -196,7 +197,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
      * Position 1: IDEPIX_SNOW_ICE
      * Position 2-16: ancillary bands VZA .. WV
      * Position 17-43: Oa01_reflectance .. Sl06_reflectance_an
-     * @param configurator
+     * @param configurator -
      */
     @Override
     protected void configureSourceSamples(SourceSampleConfigurer configurator) {
@@ -214,10 +215,13 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
 
         int ancillaryIndex = SRC_VZA_OLCI;
         for (int i = 0; i < sensor.getAncillaryBandNames().length; i++) {
-            if (sensor.getAncillaryBandNames()[i].contains("aot")) {
+            if (aotProductApplicable() && sensor.getAncillaryBandNames()[i].contains("aot")) {
                 configurator.defineSample(ancillaryIndex++, sensor.getAncillaryBandNames()[i], aotProduct);
             } else {
-                configurator.defineSample(ancillaryIndex++, sensor.getAncillaryBandNames()[i], sourceProduct);
+                if (!sensor.getAncillaryBandNames()[i].contains("aot")) {
+                    configurator.defineSample(ancillaryIndex, sensor.getAncillaryBandNames()[i], sourceProduct);
+                }
+                ancillaryIndex++;
             }
         }
 
@@ -260,7 +264,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
      * Configures a stack of samples
      * Position 0-20: sdr_Oa01 .. sdr_Sl06
      * Position 21-41: sdr_error_Oa01 .. sdr_error_Sl06, optional, if writeSdrUncertaintyBands
-     * @param configurator
+     * @param configurator -
      */
     @Override
     protected void configureTargetSamples(TargetSampleConfigurer configurator) {
@@ -297,8 +301,8 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
         final double sza_slstr = sourceSamples[SRC_SZA_SLSTR].getDouble();
         final double saa_slstr = sourceSamples[SRC_SAA_SLSTR].getDouble();
         final double hsf_meters = sourceSamples[SRC_DEM_OLCI].getDouble();
-        final double aot = sourceSamples[SRC_AOT].getDouble();
-        final double delta_aot = sourceSamples[SRC_AOT_ERR].getDouble();
+        final double aot = aotProductApplicable() ? sourceSamples[SRC_AOT].getDouble() : constantAotValue;
+        final double delta_aot = aotProductApplicable() ? sourceSamples[SRC_AOT_ERR].getDouble() : 0.015;
 
         double phi_olci = abs(saa_olci - vaa_olci);
         if (phi_olci > 180.0) {
@@ -434,7 +438,9 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
                     final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
                     final double err_RTM = sensor.getRtmError();
                     final double err_aod = deltaReflf2deltaAot * delta_aot;
-                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
+                    // final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
+                    // err_rad and err_aod were considered earlier; RQ 17.7.2026
+                    final double err_all = Math.sqrt(err_RTM * err_RTM);
 
                     targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(err_all);
                 }
@@ -486,6 +492,10 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
 
         amfMinSlstr = hyLutSlstrMinMax[12];
         amfMaxSlstr = hyLutSlstrMinMax[13];
+    }
+
+    private boolean aotProductApplicable() {
+        return aotProduct != null;
     }
 
     public static class Spi extends OperatorSpi {

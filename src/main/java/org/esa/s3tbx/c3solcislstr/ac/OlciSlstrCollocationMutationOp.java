@@ -50,8 +50,7 @@ public class OlciSlstrCollocationMutationOp extends Operator {
     private long seed;
 
     @Parameter(label = "Selector",
-            description = "A numeric value to select the random stream. If zero, no randomization is performed at all.",
-            defaultValue = "0")
+            description = "A numeric value to select the random stream. Must be > 0.")
     private long selector;
 
     @Parameter(label = "Sampling type",
@@ -85,52 +84,22 @@ public class OlciSlstrCollocationMutationOp extends Operator {
     private String uncertaintyModelType;
 
 
-    @Parameter(label = "Regression coefficient",
-            description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "1.0")
-    private double regressionCoefficient;
-
-    @Parameter(label = "Regression constant",
-            description = "The regression constant (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "0.0")
-    private double regressionConstant;
-
-    @Parameter(label = "Error correlation",
-            description = "The type of error correlation",
-            defaultValue = "Constant", valueSet = {"None", "Constant"})
-    private String camsErrorCorrelationType;
-
-    @Parameter(label = "Error correlation coefficient",
-            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
-            defaultValue = "0.5", interval = "[0.0, 1.0]")
-    private double camsErrorCorrelationCoefficient;
-
-    @Parameter(label = "Use constant bias",
-            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
-            defaultValue = "true")
-    private boolean camsUseConstantBias;
-
-    @Parameter(label = "Ucertainty model",
-            description = "The type of uncertainty model",
-            defaultValue = "Relative (10%)",
-            valueSet = {"Relative (10%)", "Relative (15%)", "Relative (20%)"})
-    private String camsUncertaintyModelType;
-
-
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
             label = "C3S SYN OLCI SLSTR L1b product")
     private Product sourceProduct;
 
     private Pcg pcg;
-    private double camsBias;
     @SuppressWarnings("FieldCanBeLocal")
     private Multivariate mv;
-    private boolean mutant;
 
     private double radBias = 0.0;
 
     @Override
     public void initialize() throws OperatorException {
+        if (!isMutant()) {
+            throw new OperatorException(String.format("Parameter 'selector' must be specified as integer > 0"));
+        }
+
         validateInput(sourceProduct);
 
         pcg = new Pcg(seed, selector);
@@ -138,28 +107,23 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         if (useConstantBias) {
             radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
         }
-        mutant = isMutant();
+//        boolean mutant = isMutant();
 
 
         // generation of radiance mutants...
-        Product mutatedOlciProduct;
         Product mutatedSlstrProduct;
         Product mutatedCollocationProduct;
-        if (mutant) {
-            if (useConstantBias) {
-                radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+        if (useConstantBias) {
+            radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
+        }
+        mutatedCollocationProduct = mutateOlciRadiance(sourceProduct);
+        mutatedSlstrProduct = mutateSlstrRadiance(sourceProduct);
+        for (int i = 0; i < SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
+            final Band origSlstrBand = mutatedCollocationProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
+            final Band mutatedSlstrBand = mutatedSlstrProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
+            if (!mutatedCollocationProduct.containsBand(mutatedSlstrBand.getName())) {
+                ProductUtils.copyBand(mutatedSlstrBand.getName(), mutatedSlstrProduct, mutatedCollocationProduct, true);
             }
-            mutatedCollocationProduct = mutateOlciRadiance(sourceProduct);
-            mutatedSlstrProduct = mutateSlstrRadiance(sourceProduct);
-            for (int i = 0; i < SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
-                final Band origSlstrBand = mutatedCollocationProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
-                final Band mutatedSlstrBand = mutatedSlstrProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
-                if (!mutatedCollocationProduct.containsBand(mutatedSlstrBand.getName())) {
-                    ProductUtils.copyBand(mutatedSlstrBand.getName(), mutatedSlstrProduct, mutatedCollocationProduct, true);
-                }
-            }
-        } else {
-            mutatedCollocationProduct = GPF.createProduct(getName(PassThroughOp.class), GPF.NO_PARAMS, sourceProduct);
         }
 
         setTargetProduct(mutatedCollocationProduct);
@@ -214,7 +178,7 @@ public class OlciSlstrCollocationMutationOp extends Operator {
     }
 
     private boolean isMutant() {
-        return selector != 0;
+        return selector > 0;
     }
 
     private static String getName(Class<? extends Operator> operatorClass) {

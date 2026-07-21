@@ -8,7 +8,6 @@ package org.esa.s3tbx.c3solcislstr.ac;
  */
 public class OlciSlstrAcConstants {
 
-    public static float CWV_CONSTANT_VALUE = 1.5f; // used for MERIS
     public final static String AOT_BAND_NAME = "aot";
     public final static String AOT_ERR_BAND_NAME = "aot_err";
     public final static String OLCI_SLSTR_SURF_PRESS_TP_NAME = "surface_pressure_tx";
@@ -34,15 +33,6 @@ public class OlciSlstrAcConstants {
     public final static String S3_A_SLSTR_ATM_PARAMS_LUT_NAME = "SENTINEL3_1_SLSTR_lut_glob_c3s_v2.nc";
     public final static String S3_B_SLSTR_ATM_PARAMS_LUT_NAME = "SENTINEL3_2_SLSTR_lut_glob_c3s_v2.nc";
 
-    final static float[] OLCI_SLSTR_WAVELENGHTS_NOMINAL = {
-            400.00f, 412.50f, 442.50f, 490.00f, 510.00f,
-            560.00f, 620.00f, 665.00f, 673.75f, 681.25f,
-            708.75f, 753.75f, 761.25f, 764.375f, 767.50f,
-            778.75f, 865.00f, 885.00f, 900.00f, 940.00f,
-            1020.00f,
-            554.27f, 659.47f, 868.00f,
-            1374.80f, 1613.40f, 2255.70f};
-
     final static float[] OLCI_SLSTR_WAVELENGHTS_S3A = {
             400.30f, 411.80f, 443.00f, 490.50f, 510.50f,
             560.50f, 620.40f, 665.30f, 674.00f, 681.60f,
@@ -60,7 +50,6 @@ public class OlciSlstrAcConstants {
             1015.7f,
             554.27f, 659.47f, 868.00f,
             1374.80f, 1613.40f, 2255.70f};
-
 
     final static float[] OLCI_SLSTR_CALIBRATION_COEFFS = {
             1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
@@ -136,20 +125,9 @@ public class OlciSlstrAcConstants {
             "Oa10_reflectance", "Oa11_reflectance", "Oa12_reflectance", "Oa13_reflectance",
             "Oa16_reflectance", "Oa17_reflectance", "Oa18_reflectance", "Oa19_reflectance"};
 
-    final static String[] OLCI_SLSTR_TOA_BAND_NAMES_OLCI = new String[]{
-            "Oa01_reflectance", "Oa02_reflectance", "Oa03_reflectance", "Oa04_reflectance", "Oa05_reflectance",
-            "Oa06_reflectance", "Oa07_reflectance", "Oa08_reflectance", "Oa09_reflectance", "Oa10_reflectance",
-            "Oa11_reflectance", "Oa12_reflectance", "Oa13_reflectance", "Oa14_reflectance", "Oa15_reflectance",
-            "Oa16_reflectance", "Oa17_reflectance", "Oa18_reflectance", "Oa19_reflectance", "Oa20_reflectance",
-            "Oa21_reflectance"};
-
     final static String[] SLSTR_TOA_RAD_BAND_NAMES = new String[]{
             "S1_radiance_an", "S2_radiance_an", "S3_radiance_an",
             "S4_radiance_an", "S5_radiance_an", "S6_radiance_an"};
-
-    final static String[] SLSTR_TOA_REFL_BAND_NAMES = new String[]{
-            "S1_reflectance_an", "S2_reflectance_an", "S3_reflectance_an",
-            "S4_reflectance_an", "S5_reflectance_an", "S6_reflectance_an"};
 
     final static String[] OLCI_SLSTR_SDR_ERROR_BAND_NAMES = new String[]{
             "sdr_error_Oa01", "sdr_error_Oa02", "sdr_error_Oa03", "sdr_error_Oa04", "sdr_error_Oa05",
@@ -161,9 +139,7 @@ public class OlciSlstrAcConstants {
             "sdr_error_Sl05", "sdr_error_Sl06"};
 
 
-    final static String DATE_AND_TIME_OF_PARENT = "";
     final static String DATE_AND_TIME_OF_SOURCE = "";
-    final static boolean DO_NOT_RENAME = false;
     final static String MELG = "MELG";
 
     public final static String idepixFlagBandName = "pixel_classif_flags";
@@ -228,9 +204,6 @@ public class OlciSlstrAcConstants {
 
     static final String LAND_EXPR_OLCI_SLSTR =
             "NOT quality_flags.invalid AND NOT quality_flags.cosmetic AND (" + COMMON_LAND_EXPR + ")";
-
-    static final String INPUT_INCONSISTENCY_ERROR_MESSAGE =
-            "No valid OLCI/SLSTR product";
 
     public static final String OLCI_SLSTR_ALL_VALID =
             "NOT quality_flags.invalid AND NOT quality_flags.cosmetic";

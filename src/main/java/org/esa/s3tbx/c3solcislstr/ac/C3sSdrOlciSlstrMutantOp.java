@@ -1,10 +1,11 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
+import org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
-import org.esa.s3tbx.c3solcislstr.mc.operators.*;
+import org.esa.s3tbx.c3solcislstr.mc.operators.Cube;
 import org.esa.snap.core.datamodel.Band;
 import org.esa.snap.core.datamodel.Product;
 import org.esa.snap.core.datamodel.ProductData;
@@ -17,11 +18,11 @@ import org.esa.snap.core.gpf.common.BandMathsOp;
 import org.esa.snap.core.gpf.pointop.*;
 import org.esa.snap.core.util.ProductUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 import static java.lang.Math.*;
 import static java.lang.StrictMath.toRadians;
-import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.OLCI_SLSTR_SDR_BAND_NAMES;
 import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.OLCI_SLSTR_TOA_BAND_NAMES;
 
 @OperatorMetadata(alias = "Sdr.C3sOlciSlstrMutant", version = "0.8",
@@ -34,7 +35,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     @SourceProduct
     private Product sourceProduct;
 
-    @SourceProduct
+    @SourceProduct(optional = true)
     private Product aotProduct;
 
     @SourceProduct(alias = "reflectance", optional = true)
@@ -51,6 +52,11 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             description = " If set, SDR are computed everywhere (brute force, ignores clouds etc.)")
     boolean computeSdrEverywhere;
 
+    @Parameter(defaultValue = "0.15",
+            label = " Constant AOT value",
+            description = "Constant AOT value which is used if the retrieval is skipped")
+    private float constantAotValue;
+
     //todo add description
     @Parameter
     protected String landExpression;
@@ -62,11 +68,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
 
     @Parameter(defaultValue = "true",
-            label = "Apply mutation on input TOA reflectances",
-            description = "If set, input TOA reflectances are mutated ")
-    private boolean mutateToa;
-
-    @Parameter(defaultValue = "true",
             label = "Apply mutation on SDR reflectances",
             description = "If set, computed SDR are mutated ")
     private boolean mutateSdr;
@@ -75,11 +76,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             description = "The type of random number generator",
             defaultValue = "MELG", valueSet = {"MELG", "PCG"})
     private String rngType;
-
-    @Parameter(label = "TOA seed number",
-            description = "A numeric value to seed the random number generator for TOA mutation",
-            defaultValue = "5489")
-    private long toaSeedNumber;
 
     @Parameter(label = "SDR seed number",
             description = "A numeric value to seed the random number generator for SDR mutation",
@@ -133,11 +129,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
 
     private String[] toaMeasurandNames;
-    private String[] sdrMeasurandNames;
-
-    private UncertaintyModel toaUncertaintyModel;
-    private Cube toaRandom;
-    private double[][] toaCoefficients;
 
     private UncertaintyModel sdrUncertaintyModel;
     private double[][] sdrCoefficients;
@@ -239,26 +230,12 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     }
 
     private void prepareMcMutations() {
-        if (mutateToa || mutateSdr) {
-            toaUncertaintyModel = MutantProvider.initializeUncertaintyModel(uncertaintyModelType);
+        if (mutateSdr) {
             sdrUncertaintyModel = MutantProvider.initializeUncertaintyModel(uncertaintyModelType);
             toaMeasurandNames = OLCI_SLSTR_TOA_BAND_NAMES;
         }
-        if (mutateToa) {
-            try {
-                toaRandom = MutantProvider.initializeRandomNumbers(sourceProduct, toaMeasurandNames.length,
-                        toaSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
-                        errorCorrelationType, errorCorrelationCoefficient);
-            } catch (Exception e) {
-                throw new OperatorException("Random noise for TOA could not be initialized.", e);
-            }
-
-            toaCoefficients = MutantProvider.initializeUncertaintyModelCoefficients(toaUncertaintyModel,
-                    toaMeasurandNames.length, uncertaintyModelCoefficientFile);
-        }
 
         if (mutateSdr) {
-            sdrMeasurandNames = OLCI_SLSTR_SDR_BAND_NAMES;
             try {
                 sdrRandom = MutantProvider.initializeRandomNumbers(sourceProduct, toaMeasurandNames.length,
                         sdrSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
@@ -315,7 +292,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
      * Position 2-16: ancillary bands VZA .. WV
      * Position 17-43: Oa01_reflectance .. Sl06_reflectance_an
      *
-     * @param configurator
+     * @param configurator -
      */
     @Override
     protected void configureSourceSamples(SourceSampleConfigurer configurator) {
@@ -333,10 +310,13 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
         int ancillaryIndex = SRC_VZA_OLCI;
         for (int i = 0; i < sensor.getAncillaryBandNames().length; i++) {
-            if (sensor.getAncillaryBandNames()[i].contains("aot")) {
+            if (aotProductApplicable() && sensor.getAncillaryBandNames()[i].contains("aot")) {
                 configurator.defineSample(ancillaryIndex++, sensor.getAncillaryBandNames()[i], aotProduct);
             } else {
-                configurator.defineSample(ancillaryIndex++, sensor.getAncillaryBandNames()[i], sourceProduct);
+                if (!sensor.getAncillaryBandNames()[i].contains("aot")) {
+                    configurator.defineSample(ancillaryIndex, sensor.getAncillaryBandNames()[i], sourceProduct);
+                }
+                ancillaryIndex++;
             }
         }
 
@@ -380,7 +360,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
      * Position 0-20: sdr_Oa01 .. sdr_Sl06
      * Position 21-41: sdr_error_Oa01 .. sdr_error_Sl06, optional, if writeSdrUncertaintyBands
      *
-     * @param configurator
+     * @param configurator -
      */
     @Override
     protected void configureTargetSamples(TargetSampleConfigurer configurator) {
@@ -417,8 +397,8 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
         final double sza_slstr = sourceSamples[SRC_SZA_SLSTR].getDouble();
         final double saa_slstr = sourceSamples[SRC_SAA_SLSTR].getDouble();
         final double hsf_meters = sourceSamples[SRC_DEM_OLCI].getDouble();
-        final double aot = sourceSamples[SRC_AOT].getDouble();
-        final double delta_aot = sourceSamples[SRC_AOT_ERR].getDouble();
+        final double aot = aotProductApplicable() ? sourceSamples[SRC_AOT].getDouble() : constantAotValue;
+        final double delta_aot = aotProductApplicable() ? sourceSamples[SRC_AOT_ERR].getDouble() : 0.015;
 
         double phi_olci = abs(saa_olci - vaa_olci);
         if (phi_olci > 180.0) {
@@ -497,10 +477,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
         }
 
         // reflectance bands correction loop
-        double[] zToa = null;
-        if (mutateToa) {
-            zToa = toaRandom.spectrum(x, y);
-        }
         double[] zSdr = null;
         if (mutateSdr) {
             zSdr = sdrRandom.spectrum(x, y);
@@ -521,12 +497,6 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                     targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(Double.NaN);
                 }
             } else {
-                // NEW: apply mutation
-                if (mutateToa) {
-                    final double toaUncertainty = toaUncertaintyModel.getUncertainty(toaRefl, toaCoefficients[i]);
-                    toaRefl = MutantProvider.getMutatedValue(toaRefl, toaUncertainty, zToa[i], positiveDefinite);
-                }
-
                 // apply calibration
                 toaRefl = toaRefl / sensor.getCalCoeff()[i];
                 // determine LUT parameters for band i
@@ -575,7 +545,9 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
                     final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
                     final double err_RTM = sensor.getRtmError();
                     final double err_aod = deltaReflf2deltaAot * delta_aot;
-                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
+//                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
+                    // err_rad and err_aod were considered earlier; RQ 17.7.2026
+                    final double err_all = Math.sqrt(err_RTM * err_RTM);
 
                     targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(err_all);
                 }
@@ -627,6 +599,10 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
         amfMinSlstr = hyLutSlstrMinMax[12];
         amfMaxSlstr = hyLutSlstrMinMax[13];
+    }
+
+    private boolean aotProductApplicable() {
+        return aotProduct != null;
     }
 
     public static class Spi extends OperatorSpi {

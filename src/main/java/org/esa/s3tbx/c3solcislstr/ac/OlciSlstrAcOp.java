@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
 
@@ -40,30 +39,24 @@ import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.*;
                 " Uses approach from USwansea/FUB developed in GlobAlbedo and LandCover CCI.")
 public class OlciSlstrAcOp extends Operator {
 
-    @Parameter(defaultValue = "false",
-            label = "Only compute AOT product",
-            description = "If set, only AOT product is generated instead of full SDR product")
-    private boolean aotOnly;
-
-    @Parameter(defaultValue = "true",
-            label = "Apply mutation on input TOA reflectances",
-            description = "If set, input TOA reflectances are mutated ")
-    private boolean mutateToa;
-
-    @Parameter(defaultValue = "true",
-            label = "Apply mutation on AOT",
-            description = "If set, AOT is mutated ")
-    private boolean mutateAot;
-
     @Parameter(defaultValue = "true",
             label = "Apply mutation on SDR reflectances",
             description = "If set, computed SDR are mutated ")
     private boolean mutateSdr;
 
-    @Parameter(defaultValue = "true",
+    @Parameter(defaultValue = "false",
             label = "Copy AOT bands into SDR product",
             description = "If set, bands of AOT and its uncertainty are copied into SDR product")
     private boolean copyAotBands;
+
+    @Parameter(defaultValue = "true",
+            label = " If set, AOT retrieval is skipped and a constant value shall be used in AC")
+    private boolean useConstantAot;
+
+    @Parameter(defaultValue = "0.15",
+            label = " Constant AOT value",
+            description = "Constant AOT value which is used if the retrieval is skipped")
+    private float constantAotValue;
 
     @Parameter(defaultValue = "true",
             label = "Copy geometry bands into SDR product",
@@ -130,48 +123,13 @@ public class OlciSlstrAcOp extends Operator {
             defaultValue = "Relative", valueSet = {"Poisson", "Relative"})
     private String uncertaintyModelType;
 
-
-    @Parameter(label = "CAMS regression coefficient",
-            description = "The regression coefficient (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "1.0")
-    private double camsRegressionCoefficient;
-
-    @Parameter(label = "CAMS regression constant",
-            description = "The regression constant (see score summary statistics https://aerocom.met.no/cgi-bin/surfobs_annualrs.pl)",
-            defaultValue = "0.0")
-    private double camsRegressionConstant;
-
-    @Parameter(label = "CAMS error correlation",
-            description = "The type of error correlation",
-            defaultValue = "Constant", valueSet = {"None", "Constant"})
-    private String camsErrorCorrelationType;
-
-    @Parameter(label = "CAMS error correlation coefficient",
-            description = "The error correlation coefficient (used to generate a sequence of correlated random numbers).",
-            defaultValue = "0.5", interval = "[0.0, 1.0]")
-    private double camsErrorCorrelationCoefficient;
-
-    @Parameter(label = "Use constant CAMS bias",
-            description = "If checked, all random numbers are correlated with a constant bias rather than a random bias (using the specified error correlation coefficient).",
-            defaultValue = "true")
-    private boolean camsUseConstantBias;
-
-    @Parameter(label = "CAMS uncertainty model",
-            description = "The type of uncertainty model",
-            defaultValue = "CAMS AOD (2020)",
-            valueSet = {"CAMS AOD (2020)", "Relative (10%)", "Relative (15%)", "Relative (20%)"})
-    private String camsUncertaintyModelType;
-
-
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
             label = "C3S SYN OLCI SLSTR L1b product")
     private Product sourceProduct;
 
     private Pcg pcg;
-    private double camsBias;
     @SuppressWarnings("FieldCanBeLocal")
     private Multivariate mv;
-    private boolean mutant;
 
     private S3OlciSlstrSensor sensor;
     private double radBias = 0.0;
@@ -190,38 +148,20 @@ public class OlciSlstrAcOp extends Operator {
         if (useConstantBias) {
             radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
         }
-        mutant = isMutant();
+        boolean mutant = isMutant();
 
+        // generation of AOT in C3sAotMasterOp...
+        Product aotProduct = processAot(sourceProduct);
 
-        // generation of AOT mutant is triggered in C3sAotMasterOp...
-        if (camsUseConstantBias) {
-            camsBias = new BoxMullerNormalVariate(mv.get(2), mv.get(3)).nextDouble();
-        }
-        Product aotProduct;
-        aotProduct = processAot(sourceProduct);
-        if (aotProduct == C3sAotMasterOp.EMPTY_PRODUCT) {
-            Logger.getLogger(getClass().getName()).warning("aotProduct is empty");
-            setTargetProduct(C3sAotMasterOp.EMPTY_PRODUCT);
-            return;
-        }
-
-        if (aotOnly) {
-            // mainly for debugging/verification
-            setTargetProduct(aotProduct);
+        if (mutant && mutateSdr) {
+            setTargetProduct(processSdrMutated(sourceProduct, aotProduct));
         } else {
-            if (mutant && (mutateToa || mutateSdr)) {
-                setTargetProduct(processSdrMutated(sourceProduct, aotProduct));
-            } else {
-                setTargetProduct(processSdr(sourceProduct, aotProduct));
-            }
+            setTargetProduct(processSdr(sourceProduct, aotProduct));
         }
 
         // generation of SDR mutant
-//        if (mutant && !aotOnly && mutateSdr) {
-//            setTargetProduct(mutateSurfaceReflectance(getTargetProduct()));
-//        }
 
-        if (copyAotBands && !aotOnly) {
+        if (copyAotBands && !(aotProduct == C3sAotMasterOp.EMPTY_PRODUCT)) {
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_BAND_NAME, aotProduct, getTargetProduct(), true);
             ProductUtils.copyBand(OlciSlstrAcConstants.AOT_ERR_BAND_NAME, aotProduct, getTargetProduct(), true);
             if (aotProduct.containsBand(AotConsts.aotFlags.name)) {
@@ -230,7 +170,7 @@ public class OlciSlstrAcOp extends Operator {
 
         }
 
-        if (copyGeometryBands && !aotOnly) {
+        if (copyGeometryBands) {
             for (String geomBandNameOlci : sensor.getGeomBandNamesOlci()) {
                 copySourceBands(geomBandNameOlci);
             }
@@ -259,14 +199,16 @@ public class OlciSlstrAcOp extends Operator {
     private Product processSdr(Product sourceProduct, Product aotProduct) {
         Map<String, Product> sdrSourceProducts = new HashMap<>();
         sdrSourceProducts.put("sourceProduct", sourceProduct);
-        sdrSourceProducts.put("aotProduct", aotProduct);
+        final Product aotProductToUse = aotProduct == C3sAotMasterOp.EMPTY_PRODUCT ? null : aotProduct;
+        sdrSourceProducts.put("aotProduct", aotProductToUse);
         return GPF.createProduct(getName(C3sSdrOlciSlstrOp.class), sdrParameterMap(), sdrSourceProducts);
     }
 
     private Product processSdrMutated(Product sourceProduct, Product aotProduct) {
         Map<String, Product> sdrSourceProducts = new HashMap<>();
         sdrSourceProducts.put("sourceProduct", sourceProduct);
-        sdrSourceProducts.put("aotProduct", aotProduct);
+        final Product aotProductToUse = aotProduct == C3sAotMasterOp.EMPTY_PRODUCT ? null : aotProduct;
+        sdrSourceProducts.put("aotProduct", aotProductToUse);
         return GPF.createProduct(getName(C3sSdrOlciSlstrMutantOp.class), sdrMutantParameterMap(), sdrSourceProducts);
     }
 
@@ -308,22 +250,8 @@ public class OlciSlstrAcOp extends Operator {
     private Map<String, Object> aerosolRetrievalParameterMap() {
         final Map<String, Object> map = new HashMap<>();
         map.put("sensor", sensor);
-        map.put("useConstantAot", false);
-        map.put("constantAotValue", 0.15f);
+        map.put("useConstantAot", useConstantAot);
         map.put("computeAotEverywhere", computeAotEverywhere);
-        map.put("mutant", mutant);
-        map.put("mutateAot", mutateAot);
-        map.put("rngType", MELG);
-        map.put("positiveDefinite", true);
-        map.put("seedNumber", pcg.nextLong());
-        map.put("seedString", DATE_AND_TIME_OF_PARENT);
-        map.put("regressionCoefficient", camsRegressionCoefficient);
-        map.put("regressionConstant", camsRegressionConstant);
-        map.put("errorCorrelationType", camsErrorCorrelationType);
-        map.put("errorCorrelationCoefficient", camsErrorCorrelationCoefficient);
-        map.put("useConstantBias", camsUseConstantBias);
-        map.put("bias", camsBias);
-        map.put("uncertaintyModelType", camsUncertaintyModelType);
         return map;
     }
 
@@ -331,6 +259,7 @@ public class OlciSlstrAcOp extends Operator {
     private Map<String, Object> sdrParameterMap() {
         final Map<String, Object> map = new HashMap<>();
         map.put("sensor", sensor);
+        map.put("constantAotValue", constantAotValue);
         map.put("computeSdrEverywhere", computeSdrEverywhere);
         map.put("writeSdrUncertaintyBands", writeSdrUncertaintyBands);
         final String[] s3aLutNames = getAtmosphericParametersLutFilePaths();
@@ -353,7 +282,6 @@ public class OlciSlstrAcOp extends Operator {
         map.put("useConstantBias", useConstantBias);
         map.put("bias", radBias);
         map.put("uncertaintyModelType", uncertaintyModelType);
-        map.put("mutateToa", mutateToa);
         map.put("mutateSdr", mutateSdr);
 
         return map;
