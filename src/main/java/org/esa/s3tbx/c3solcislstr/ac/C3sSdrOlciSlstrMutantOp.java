@@ -3,6 +3,7 @@ package org.esa.s3tbx.c3solcislstr.ac;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
+import org.esa.s3tbx.c3solcislstr.mc.ConstantUncertaintyModel;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
 import org.esa.s3tbx.c3solcislstr.mc.operators.Cube;
 import org.esa.snap.core.datamodel.Band;
@@ -127,11 +128,11 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private File uncertaintyModelCoefficientFile;
 
 
-    private String[] toaMeasurandNames;
-
     private UncertaintyModel sdrUncertaintyModel;
     private double[][] sdrCoefficients;
     private Cube sdrRandom;
+
+    private Cube rtmRandom;
 
     static final int SRC_LAND_MASK = 0;
     static final int SRC_SNOW_MASK = 1;
@@ -194,6 +195,7 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private double amfMaxSlstr;
 
     private double[] geophysicalNoDataValues;
+    private double rtmUncertainty;
 
 
     @Override
@@ -231,12 +233,8 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
     private void prepareMcMutations() {
         if (mutateSdr) {
             sdrUncertaintyModel = MutantProvider.initializeUncertaintyModel(uncertaintyModelType);
-            toaMeasurandNames = OLCI_SLSTR_TOA_BAND_NAMES;
-        }
-
-        if (mutateSdr) {
             try {
-                sdrRandom = MutantProvider.initializeRandomNumbers(sourceProduct, toaMeasurandNames.length,
+                sdrRandom = MutantProvider.initializeRandomNumbers(sourceProduct, OLCI_SLSTR_TOA_BAND_NAMES.length,
                         sdrSeedNumber, seedString, rngType, useConstantBias, bias, errorCodecType,
                         errorCorrelationType, errorCorrelationCoefficient);
             } catch (Exception e) {
@@ -244,8 +242,23 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             }
 
             sdrCoefficients = MutantProvider.initializeUncertaintyModelCoefficients(sdrUncertaintyModel,
-                    toaMeasurandNames.length, uncertaintyModelCoefficientFile);
+                    OLCI_SLSTR_TOA_BAND_NAMES.length, uncertaintyModelCoefficientFile);
         }
+
+        if (writeSdrUncertaintyBands) {
+            UncertaintyModel rtmConstantUncertaintyModel = new ConstantUncertaintyModel(0.01 * sensor.getRtmError());
+            final double dummy = Double.NaN;
+            rtmUncertainty = rtmConstantUncertaintyModel.getUncertainty(dummy);  // returns constant 0.01 * sensor.getRtmError()
+
+            try {
+                rtmRandom = MutantProvider.initializeRandomNumbers(sourceProduct, OLCI_SLSTR_TOA_BAND_NAMES.length,
+                        sdrSeedNumber + 1l, seedString, rngType, useConstantBias, bias, errorCodecType,
+                        errorCorrelationType, errorCorrelationCoefficient);
+            } catch (Exception e) {
+                throw new OperatorException("Random noise for SDR could not be initialized.", e);
+            }
+        }
+
     }
 
     @Override
@@ -481,6 +494,11 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
             zSdr = sdrRandom.spectrum(x, y);
         }
 
+        double[] zRtm = null;
+        if (writeSdrUncertaintyBands) {
+            zRtm = rtmRandom.spectrum(x, y);
+        }
+
         int counter = 0;
         final int ERROR_TARGET_BAND_OFFSET = sensor.getSdrBandNames().length;
         for (int i = 0; i < sensor.getNumBands(); ++i) {
@@ -541,14 +559,16 @@ public class C3sSdrOlciSlstrMutantOp extends PixelOperator {
 
                 // calculate uncertainty
                 if (writeSdrUncertaintyBands) {
-                    final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
-                    final double err_RTM = sensor.getRtmError();
-                    final double err_aod = deltaReflf2deltaAot * delta_aot;
-                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
                     // err_rad and err_aod were considered earlier; RQ 17.7.2026
-//                    final double err_all = Math.sqrt(err_RTM * err_RTM);
+//                    final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
+//                    final double err_aod = deltaReflf2deltaAot * delta_aot;
+                    final double err_rtm = MutantProvider.getMutatedValue(sensor.getRtmError(), rtmUncertainty, zRtm[i], positiveDefinite);
+
+//                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
 //                    final double err_all = Math.sqrt(err_aod * err_aod);
                     // TODO: finally decide (RQ, GK) whar err_all should be
+                    final double err_all = Math.sqrt(err_rtm * err_rtm);
+
                     targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(err_all);
                 }
             }
