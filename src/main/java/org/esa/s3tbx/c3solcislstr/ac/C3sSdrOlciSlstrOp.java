@@ -1,6 +1,5 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
-import org.esa.s3tbx.c3solcislstr.ac.aot.C3sAotMasterOp;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutOlci;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.HyLutSlstr;
 import org.esa.s3tbx.c3solcislstr.ac.aot.lut.Lut;
@@ -197,6 +196,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
      * Position 1: IDEPIX_SNOW_ICE
      * Position 2-16: ancillary bands VZA .. WV
      * Position 17-43: Oa01_reflectance .. Sl06_reflectance_an
+     *
      * @param configurator -
      */
     @Override
@@ -264,6 +264,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
      * Configures a stack of samples
      * Position 0-20: sdr_Oa01 .. sdr_Sl06
      * Position 21-41: sdr_error_Oa01 .. sdr_error_Sl06, optional, if writeSdrUncertaintyBands
+     *
      * @param configurator -
      */
     @Override
@@ -302,7 +303,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
         final double saa_slstr = sourceSamples[SRC_SAA_SLSTR].getDouble();
         final double hsf_meters = sourceSamples[SRC_DEM_OLCI].getDouble();
         final double aot = aotProductApplicable() ? sourceSamples[SRC_AOT].getDouble() : constantAotValue;
-        final double delta_aot = aotProductApplicable() ? sourceSamples[SRC_AOT_ERR].getDouble() : 0.015;
+        final double delta_aot = aotProductApplicable() ? sourceSamples[SRC_AOT_ERR].getDouble() : 0.1 * aot;
 
         double phi_olci = abs(saa_olci - vaa_olci);
         if (phi_olci > 180.0) {
@@ -385,7 +386,7 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
         final int ERROR_TARGET_BAND_OFFSET = sensor.getSdrBandNames().length;
         for (int i = 0; i < sensor.getNumBands(); ++i) {
             // skip bands not to be corrected
-            if (! sensor.isToaBandToBeCorrected(i)) {
+            if (!sensor.isToaBandToBeCorrected(i)) {
                 continue;
             }
             // check for no-data value
@@ -429,19 +430,20 @@ public class C3sSdrOlciSlstrOp extends PixelOperator {
                 // calculate corrected reflectance
                 toaRefl = toaRefl / tg;
                 final double x_term = (toaRefl - rpw) / ttot;
-                final double rfl_pix = x_term / (1. + sab * x_term);  //calculation of SDR
+                final double sdr = x_term / (1. + sab * x_term);  //calculation of SDR
 
-                targetSamples[counter].set(rfl_pix);
+                targetSamples[counter].set(sdr);
 
                 // calculate uncertainty
                 if (writeSdrUncertaintyBands) {
                     final double err_rad = sensor.getRadiometricError() * toaRefl / ttot;
                     final double err_RTM = sensor.getRtmError();
                     final double err_aod = deltaReflf2deltaAot * delta_aot;
-                    // final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
+                    final double err_all = Math.sqrt(err_rad * err_rad + err_RTM * err_RTM + err_aod * err_aod);
                     // err_rad and err_aod were considered earlier; RQ 17.7.2026
-                    final double err_all = Math.sqrt(err_RTM * err_RTM);
-
+//                    final double err_all = Math.sqrt(err_RTM * err_RTM);
+//                    final double err_all = Math.sqrt(err_aod * err_aod);
+                    // TODO: finally decide (RQ, GK) whar err_all should be
                     targetSamples[counter + ERROR_TARGET_BAND_OFFSET].set(err_all);
                 }
             }
