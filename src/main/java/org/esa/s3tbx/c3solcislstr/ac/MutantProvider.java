@@ -142,7 +142,7 @@ public class MutantProvider {
      * @return the mutated value
      */
     public static double getMutatedValue(double x, double u, double z, boolean positiveDefinite) {
-        if (positiveDefinite) {
+        if (positiveDefinite && x > 0) {
             return getMutatedValueLognormal(x, u, z);
         }
         return getMutatedValueNormal(x, u, z);

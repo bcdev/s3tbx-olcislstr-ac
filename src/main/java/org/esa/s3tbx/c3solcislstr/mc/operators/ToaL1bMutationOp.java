@@ -197,7 +197,7 @@ public class ToaL1bMutationOp extends PixelOperator {
     }
 
     private double getMutatedValue(double x, double u, double z) {
-        if (positiveDefinite) {
+        if (positiveDefinite && x > 0) {
             return getMutatedValueLognormal(x, u, z);
         }
         return getMutatedValueNormal(x, u, z);
