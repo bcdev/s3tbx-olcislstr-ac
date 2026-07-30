@@ -274,12 +274,12 @@ public class ToaL1bMutationOp extends PixelOperator {
         final double latRdPixel = calcLatLonError();  // Gaussian distributed around +0.3 or -0.3 with sigma = 0.1
         final double lonRdPixel = calcLatLonError();  // Gaussian distributed around +0.3 or -0.3 with sigma = 0.1
 
-        final double xShiftLat = 0.5 * latRdPixel * (latRight - latLeft);
-        final double yshiftlat = 0.5 * latRdPixel * (latUpper - latLower);
+        final double xShiftLat = latRdPixel * (latRight - latLeft);
+        final double yshiftlat = latRdPixel * (latUpper - latLower);
         final double shiftLat = 0.5 * (xShiftLat + yshiftlat);
 
-        final double xShiftLon = 0.5 * lonRdPixel * (lonRight - lonLeft);
-        final double yshiftlon = 0.5 * lonRdPixel * (lonUpper - lonLower);
+        final double xShiftLon = lonRdPixel * (lonRight - lonLeft);
+        final double yshiftlon = lonRdPixel * (lonUpper - lonLower);
         final double shiftLon = 0.5 * (xShiftLon + yshiftlon);
 
         final double latRandomized = latCenter + shiftLat;
