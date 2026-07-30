@@ -1,5 +1,6 @@
 package org.esa.s3tbx.c3solcislstr.ac;
 
+import com.bc.ceres.multilevel.MultiLevelImage;
 import org.esa.s3tbx.c3solcislstr.mc.Multivariate;
 import org.esa.s3tbx.c3solcislstr.mc.generators.LatinHypercube;
 import org.esa.s3tbx.c3solcislstr.mc.generators.Melg;
@@ -83,6 +84,16 @@ public class OlciSlstrCollocationMutationOp extends Operator {
             defaultValue = "Relative", valueSet = {"Poisson", "Relative"})
     private String uncertaintyModelType;
 
+    @Parameter(label = "Mutate geolcation",
+            description = "If checked, geolocation is mutated as well).",
+            defaultValue = "true")
+    private boolean mutateGeolocation;
+
+    @Parameter(label = "Activate debug mode",
+            description = "If checked, more output is written.",
+            defaultValue = "false")
+    private boolean debug;
+
 
     @SourceProduct(description = "C3S SYN OLCI SLSTR product",
             label = "C3S SYN OLCI SLSTR L1b product")
@@ -116,10 +127,11 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         if (useConstantBias) {
             radBias = new BoxMullerNormalVariate(mv.get(0), mv.get(1)).nextDouble();
         }
+
         mutatedCollocationProduct = mutateOlciRadiance(sourceProduct);
+
         mutatedSlstrProduct = mutateSlstrRadiance(sourceProduct);
         for (int i = 0; i < SLSTR_TOA_RAD_BAND_NAMES.length; i++) {
-            final Band origSlstrBand = mutatedCollocationProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
             final Band mutatedSlstrBand = mutatedSlstrProduct.getBand(SLSTR_TOA_RAD_BAND_NAMES[i]);
             if (!mutatedCollocationProduct.containsBand(mutatedSlstrBand.getName())) {
                 ProductUtils.copyBand(mutatedSlstrBand.getName(), mutatedSlstrProduct, mutatedCollocationProduct, true);
@@ -209,6 +221,8 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         map.put("measurandNames", OLCI_TOA_RAD_BAND_NAMES);
         map.put("measurandUncertaintyNames", OLCI_TOA_RAD_UNC_BAND_NAMES);
         map.put("useUncertaintyModel", false);
+        map.put("mutateGeolocation", mutateGeolocation);
+        map.put("debug", debug);
         return map;
     }
 
@@ -225,6 +239,7 @@ public class OlciSlstrCollocationMutationOp extends Operator {
         map.put("uncertaintyModelType", uncertaintyModelType);
         map.put("measurandNames", SLSTR_TOA_RAD_BAND_NAMES);
         map.put("useUncertaintyModel", true);
+        map.put("mutateGeolocation", mutateGeolocation);
         return map;
     }
 
