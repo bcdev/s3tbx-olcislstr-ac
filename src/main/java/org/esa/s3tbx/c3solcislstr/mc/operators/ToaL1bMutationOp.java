@@ -16,6 +16,7 @@
 
 package org.esa.s3tbx.c3solcislstr.mc.operators;
 
+import org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants;
 import org.esa.s3tbx.c3solcislstr.mc.RandomVariate;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModel;
 import org.esa.s3tbx.c3solcislstr.mc.UncertaintyModelFactory;
@@ -39,6 +40,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+
+import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.SLSTR_TOA_RAD_BAND_NAMES;
+import static org.esa.s3tbx.c3solcislstr.ac.OlciSlstrAcConstants.SLSTR_TOA_RAD_BAND_UNCERTAINTIES;
 
 /**
  * Operator to add Gaussian noise to measurements of spectral radiance (or brightness
@@ -190,7 +194,14 @@ public class ToaL1bMutationOp extends PixelOperator {
         } else {
             for (int i = 0, j = 0; i < measurandNames.length; i++) {
                 final double measurement = getSampleValue(sourceSamples[j++], x, y);
-                final double uncertainty = getSampleValue(sourceSamples[j++], x, y);
+                double uncertainty;
+                if (measurandNames.length == SLSTR_TOA_RAD_BAND_NAMES.length) {
+                    // SLSTR case
+                    uncertainty = SLSTR_TOA_RAD_BAND_UNCERTAINTIES[i];
+                } else {
+                    // OLCI case
+                    uncertainty = getSampleValue(sourceSamples[j++], x, y);
+                }
                 setSampleValue(targetSamples[i], getMutatedValue(measurement, uncertainty, z[i]));
             }
         }

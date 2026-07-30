@@ -125,9 +125,13 @@ public class OlciSlstrAcConstants {
             "Oa10_reflectance", "Oa11_reflectance", "Oa12_reflectance", "Oa13_reflectance",
             "Oa16_reflectance", "Oa17_reflectance", "Oa18_reflectance", "Oa19_reflectance"};
 
-    final static String[] SLSTR_TOA_RAD_BAND_NAMES = new String[]{
+    public final static String[] SLSTR_TOA_RAD_BAND_NAMES = new String[]{
             "S1_radiance_an", "S2_radiance_an", "S3_radiance_an",
             "S4_radiance_an", "S5_radiance_an", "S6_radiance_an"};
+
+    // GK, 20260729:
+    public final static double[] SLSTR_TOA_RAD_BAND_UNCERTAINTIES = new double[]{
+            2.01858, 1.90335, 1.42196, 0.02451, 0.52818, 0.12414};
 
     final static String[] OLCI_SLSTR_SDR_ERROR_BAND_NAMES = new String[]{
             "sdr_error_Oa01", "sdr_error_Oa02", "sdr_error_Oa03", "sdr_error_Oa04", "sdr_error_Oa05",
